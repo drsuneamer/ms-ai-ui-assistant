@@ -1,0 +1,40 @@
+# ▶️ 가상환경 폴더 (예: venv, env 등)
+venv/
+env/
+
+# 🐍 Python 캐시 및 컴파일 파일
+__pycache__/
+*.py[cod]
+*.pyo
+
+# 📦 패키지 관리 파일
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# 🔐 환경 변수 및 개인 키 파일
+.env
+.env.*
+
+# 📊 Streamlit 캐시
+.streamlit/
+**/.streamlit/
+**/.streamlit/config.toml
+**/.streamlit/secrets.toml
+
+# 💾 Jupyter notebook 체크포인트 (사용할 경우)
+.ipynb_checkpoints
+
+# 🔍 VSCode 설정 (팀원에 따라 사용하지 않을 수 있음)
+.vscode/
+
+# 📁 OS/에디터별 파일
+.DS_Store
+Thumbs.db
+
+# 📂 로그파일 및 디버깅
+*.log
+
+# 🚫 기타 프로젝트별 빌드 디렉터리 (필요 시)
+node_modules/
