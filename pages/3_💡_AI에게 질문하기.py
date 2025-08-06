@@ -7,6 +7,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.tools import tool
+from langchain_core.callbacks import BaseCallbackHandler
 import os
 import streamlit as st
 
@@ -27,6 +28,23 @@ col1, col2 = st.columns([1, 1])
 llm_gpt4 = os.getenv("AZURE_OPENAI_LLM_GPT4")   # Agent를 위한 gpt-4 모델 사용
 llm_mini = os.getenv("AZURE_OPENAI_LLM_MINI")
 search_index_name = os.getenv("AZURE_AI_SEARCH_INDEX_NAME") # rag-uiux
+
+# Tool 사용을 추적하는 콜백 클래스
+class ToolTracker(BaseCallbackHandler):
+    def __init__(self):
+        self.used_tools = []
+        
+    def on_tool_start(self, serialized, input_str, **kwargs):
+        tool_name = serialized.get("name", "Unknown")
+        if tool_name not in self.used_tools:
+            self.used_tools.append(tool_name)
+    
+    def reset(self):
+        self.used_tools = []
+
+# 전역 tool tracker 인스턴스
+if 'tool_tracker' not in st.session_state:
+    st.session_state.tool_tracker = ToolTracker()
 
 def format_docs(docs):
     return "\n\n".join([doc.page_content for doc in docs])
@@ -203,10 +221,24 @@ tools = [help_uiux, help_microcopy, web_search]
 prompt = ChatPromptTemplate.from_messages(
     [
         ("system", """
-        당신은 UI/UX 전문 AI 어시스턴트입니다. 사용자의 질문에 대해 최적의 답변을 제공하기 위해 다음 도구를 사용할 수 있습니다:
-        1. UI/UX 관련 질문에 대한 답변: 'help_uiux' 도구를 사용하여 Azure AI Search에서 검색된 가이드라인을 기반으로 답변합니다.
-        2. 마이크로카피 작성 요청: 'help_microcopy' 도구를 사용하여 사용자 요구에 맞는 마이크로카피를 작성합니다.
-        3. 웹 검색: 'web_search' 도구를 사용하여 직접적인 UI 관련 질문이 아닌 경우 웹 검색을 통해 답변을 제공합니다.
+        당신은 UI/UX 전문 AI 어시스턴트입니다. 사용자의 질문에 대해 최적의 답변을 제공하기 위해 다음 도구를 적절히 선택하여 사용해야 합니다:
+
+        🔍 **help_uiux**: UI/UX 디자인, 사용자 경험, 인터페이스 설계, 사용성, 접근성 등과 관련된 질문일 때 사용
+        - 예: "버튼 디자인을 어떻게 개선하면 좋을까요?", "사용자 경험을 향상시키려면?", "UI 가이드라인이 궁금해요"
+        
+        ✏️ **help_microcopy**: 버튼 텍스트, 오류 메시지, 안내 문구, 라벨링 등 UI 텍스트 작성 요청일 때 사용
+        - 예: "로그인 버튼에 쓸 텍스트 추천해주세요", "오류 메시지를 어떻게 쓰면 좋을까요?", "메뉴명을 정해주세요"
+        
+        🌐 **web_search**: 최신 트렌드, 시장 동향, 특정 회사/제품 정보, 기술 동향 등 실시간 정보가 필요한 질문일 때 사용
+        - 예: "2024년 UI 트렌드가 궁금해요", "구글의 최신 디자인 시스템은?", "요즘 인기있는 앱 UI는?"
+
+        **중요한 판단 기준:**
+        - UI/UX 관련 질문이면서 구체적인 디자인 조언이 필요하면 → help_uiux
+        - 텍스트나 카피 작성 요청이면 → help_microcopy  
+        - 최신 정보나 실시간 검색이 필요하면 → web_search
+        - 회의록 분석이나 조언 요청이면 → help_uiux (UI/UX 맥락으로 해석)
+
+        각 질문의 핵심 의도를 파악하여 가장 적합한 도구를 선택하세요.
          """),
         ("user", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
@@ -219,7 +251,7 @@ agent = create_tool_calling_agent(
     prompt,
 )
 
-# AgentExecutor 생성 - 이 부분이 중요합니다!
+# AgentExecutor 생성 - return_intermediate_steps=True 추가!
 agent_executor = AgentExecutor(
     agent=agent, 
     tools=tools, 
@@ -227,6 +259,7 @@ agent_executor = AgentExecutor(
     handle_parsing_errors=True,  # 파싱 에러 처리
     max_iterations=3,  # 최대 반복 횟수 제한
     max_execution_time=60,  # 최대 실행 시간(초)
+    return_intermediate_steps=True,  # 중간 단계 정보 반환
 )
 
 with col1:
@@ -264,17 +297,44 @@ with col2:
         if st.button("🚀 질문/조언 받기", type="primary", use_container_width=True, key=btn_key):
             with st.spinner("AI가 답변을 준비 중입니다..."):
                 try:
+                    # Tool tracker 리셋
+                    st.session_state.tool_tracker.reset()
+                    
                     if meeting_content.strip() and not user_question.strip():
                         advice_prompt = f"다음 회의록을 바탕으로 UI/UX 개선 조언을 해주세요:\n\n{meeting_content}"
-                        # AgentExecutor의 invoke 메서드 사용
-                        result = agent_executor.invoke({"input": advice_prompt})
+                        # AgentExecutor의 invoke 메서드 사용 (콜백 포함)
+                        result = agent_executor.invoke(
+                            {"input": advice_prompt},
+                            config={"callbacks": [st.session_state.tool_tracker]}
+                        )
                     elif user_question.strip():
-                        # AgentExecutor의 invoke 메서드 사용
-                        result = agent_executor.invoke({"input": user_question})
+                        # AgentExecutor의 invoke 메서드 사용 (콜백 포함)
+                        result = agent_executor.invoke(
+                            {"input": user_question},
+                            config={"callbacks": [st.session_state.tool_tracker]}
+                        )
                     
                     # 답변만 추출해서 세션에 저장
                     answer = result.get("output", str(result))
                     st.session_state["ai_answer"] = answer
+                    
+                    # 사용된 tool 정보 저장 (콜백에서 수집된 정보 + intermediate_steps에서 추출)
+                    used_tools = st.session_state.tool_tracker.used_tools.copy()
+                    
+                    # intermediate_steps에서도 추가로 확인
+                    steps = result.get("intermediate_steps", [])
+                    for step in steps:
+                        if isinstance(step, tuple) and len(step) >= 1:
+                            action = step[0]
+                            if hasattr(action, 'tool') and action.tool not in used_tools:
+                                used_tools.append(action.tool)
+                    
+                    # tool이 사용되지 않은 경우
+                    if not used_tools:
+                        used_tools = ["직접 답변"]
+                    
+                    st.session_state["used_tools"] = used_tools
+                    
                 except Exception as e:
                     st.error(f"AI 답변 생성 중 오류: {str(e)}")
                     # 디버깅을 위한 상세 에러 정보
@@ -283,7 +343,31 @@ with col2:
 
     if "ai_answer" in st.session_state:
         st.markdown("#### 📝 AI의 답변")
+        
+        # 사용된 tool 정보 표시
+        if "used_tools" in st.session_state:
+            tool_name_map = {
+                "help_uiux": "🔍 UI/UX 가이드라인 검색",
+                "help_microcopy": "✏️ 마이크로카피 생성", 
+                "web_search": "🌐 웹 검색",
+                "직접 답변": "🤖 AI 직접 답변"
+            }
+            
+            used_tools = st.session_state["used_tools"]
+            tool_displays = []
+            for tool in used_tools:
+                display_name = tool_name_map.get(tool, f"🔧 {tool}")
+                tool_displays.append(display_name)
+            
+            if len(tool_displays) == 1:
+                st.info(f"**사용된 AI Tool:** {tool_displays[0]}")
+            else:
+                st.info(f"**사용된 AI Tools:** {' + '.join(tool_displays)}")
+        
+        
         st.write(st.session_state["ai_answer"])
+        
+        
         st.download_button(
             label="📥 답변 다운로드 (Markdown)",
             data=str(st.session_state["ai_answer"]),
@@ -301,4 +385,17 @@ with st.sidebar:
     - 회의록을 입력하거나 업로드하면, 회의 내용을 바탕으로 UI/UX 개선 조언을 받을 수 있습니다.
     - 답변은 Markdown 파일로 다운로드할 수 있습니다.
     - UI/UX, 마이크로카피, 사례 등 다양한 주제를 자유롭게 질문하세요.
+    """)
+    
+    st.divider()
+    st.markdown("### 🔧 AI Tools")
+    st.markdown("""
+    **🔍 UI/UX 가이드라인 검색**
+    - 디자인 원칙과 사용자 경험 조언
+    
+    **✏️ 마이크로카피 생성**
+    - 버튼, 메시지, 라벨 텍스트 작성
+    
+    **🌐 웹 검색**
+    - 최신 트렌드와 실시간 정보 검색
     """)
