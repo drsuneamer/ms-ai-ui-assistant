@@ -1,4 +1,3 @@
-# Landing Page
 import streamlit as st
 
 st.set_page_config(
@@ -6,35 +5,26 @@ st.set_page_config(
     page_icon="📑"
 )
 
-st.title("Landing Page 🛸")
+st.title("HELP_MEET")
 with st.sidebar:
-    st.markdown("🚀 Navigation")
+    st.markdown("🚀 필요한 기능이 있는 페이지를 선택해보세요")
 
-# # 커스텀 CSS로 file_uploader 라벨 크기 조정
-# st.markdown("""
-#     <style>
-#     /* 최신 Streamlit에서 file_uploader 라벨 스타일 변경 */
-#     div[data-testid="stFileUploader"] label {
-#         font-size: 100px !important;
-#         color: grey !important;
-#     }
-#     </style>
-# """, unsafe_allow_html=True)
+st.markdown("""
+### 📚 기능 소개
+<br>\n
+###### 📇 회의록 기반 UI 요구사항 분석  
+- 정리된 회의록을 올리거나, 회의 내용을 그대로 업로드해 AI가 회의에서 언급된 UI 요구사항을 분석해보세요.<br><br>
 
-# txt 파일 업로드
-uploaded_file = st.file_uploader("회의 전문을 올려보세요", type="txt")
-if uploaded_file is not None:
-    # Read the file
-    content = uploaded_file.read().decode("utf-8")
-    st.text_area("File Content", content, height=300)
-    
-    print(content)
-    
-# pdf 파일 업로드
-uploaded_pdf = st.file_uploader("회의록 PDF를 올려보세요", type="pdf")
-if uploaded_pdf is not None:
-    # Read the file
-    content_pdf = uploaded_pdf.read()
-    st.text_area("PDF Content", content_pdf, height=300)
-    
-    print(content_pdf)
+\n
+
+###### 🛠️ 회의 결과 기반 코드 개선
+- 회의에서 언급된 요구사항이나, 직접 요구사항을 입력하고 사용 중인 코드를 업로드하면, AI가 해당 요구사항을 반영하여 코드를 개선해줘요.
+- html, react, vue.js 등 다양한 프론트엔드 코드에 적용할 수 있어요.
+
+\n
+<br>
+\n
+###### 💡 AI에게 질문하기
+- 요약된 회의록이나, 회의 전문을 바탕으로 추가적으로 개선할 사항을 질문할 수 있어요.
+- UI 개선 제안, 마이크로카피 작성이나 유사한 사례 등 질문에 맞는 로직을 선택해 AI가 답변해요.
+""", unsafe_allow_html=True)
