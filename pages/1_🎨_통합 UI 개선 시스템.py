@@ -6,6 +6,10 @@ from langchain.schema import HumanMessage, SystemMessage
 import json
 import re
 import datetime
+import tempfile
+from speech_utils import init_speech_config, speech_to_text_safe
+from langchain_utils import init_langchain_client
+
 
 # 회의록에서 도출된 요구사항과 현재 코드를 입력받아 개선된 코드를 제공하는 페이지
 # JSON 형태의 요구사항과 HTML/React/JavaScript/JSP 코드를 분석하여 개선안 제시
@@ -13,22 +17,6 @@ import datetime
 # 환경변수 로드
 load_dotenv()
 llm_name = os.getenv("AZURE_OPENAI_LLM_MINI")
-
-# LangChain Azure OpenAI 클라이언트 설정
-@st.cache_resource
-def init_langchain_client():
-    try:
-        llm = AzureChatOpenAI(
-            azure_deployment=llm_name,
-            api_version=os.getenv("OPENAI_API_VERSION"),
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            api_key=os.getenv("OPENAI_API_KEY"),
-            temperature=0.1
-        )
-        return llm
-    except Exception as e:
-        st.error(f"LangChain Azure OpenAI 연결 실패: {str(e)}")
-        return None
 
 # 회의록 분석 시스템 프롬프트
 MEETING_ANALYSIS_PROMPT = """
@@ -420,7 +408,7 @@ def main():
     st.markdown("**회의록 → 요구사항 분석 → 코드 개선**까지 한 번에!")
     
     # LangChain 클라이언트 초기화
-    llm = init_langchain_client()
+    llm = init_langchain_client(llm_name, 0.1)
     if not llm:
         st.error("❌ LangChain Azure OpenAI 연결에 실패했습니다.")
         return
@@ -469,15 +457,17 @@ def main():
             # 회의록 입력 방식
             input_method = st.radio(
                 "입력 방식 선택:",
-                ["📁 파일 업로드", "📝 직접 입력"]
+                ["📁 텍스트 파일 업로드", "🎤 음성 파일 업로드", "📝 직접 입력"]
             )
             
+            
             meeting_content = ""
-            if input_method == "📁 파일 업로드":
+            if input_method == "📁 텍스트 파일 업로드":
                 uploaded_meeting_file = st.file_uploader(
-                    "회의록 파일을 업로드하세요:",
-                    type=['txt', 'md', 'pdf', 'docx'],
-                    help="TXT, MD 파일을 지원합니다."
+                    "회의록 텍스트 파일을 업로드하세요:",
+                    type=['txt', 'md'],
+                    help="TXT, MD 파일을 지원합니다.",
+                    key="text_file_uploader"
                 )
                 
                 if uploaded_meeting_file is not None:
@@ -488,7 +478,110 @@ def main():
                         with st.expander("📄 파일 내용 미리보기"):
                             st.text_area("내용", meeting_content, height=200, disabled=True)
                     else:
-                        st.error("현재는 텍스트 파일(.txt)과 마크다운 파일(.md)만 지원됩니다.")
+                        st.error("텍스트 파일(.txt)과 마크다운 파일(.md)만 지원됩니다.")
+            
+            elif input_method == "🎤 음성 파일 업로드":
+                st.info("🎵 음성 파일을 업로드하면 자동으로 텍스트로 변환됩니다.")
+                
+                uploaded_audio_file = st.file_uploader(
+                    "회의 녹음 파일을 업로드하세요:",
+                    type=['wav', 'mp3', 'm4a', 'flac', 'aac'],
+                    help="다양한 음성 파일 형식을 지원합니다. 자동으로 텍스트로 변환됩니다.",
+                    key="audio_file_uploader"
+                )
+                
+                if uploaded_audio_file is not None:
+                    st.success(f"✅ 음성 파일이 업로드되었습니다: {uploaded_audio_file.name}")
+                    
+                    # 파일 정보 표시
+                    file_size = len(uploaded_audio_file.getvalue()) / (1024 * 1024)  # MB
+                    st.info(f"📁 파일 크기: {file_size:.2f} MB")
+                    
+                    # 파일 크기 제한 확인
+                    if file_size > 100:
+                        st.warning("⚠️ 파일이 100MB를 초과합니다. 처리 시간이 오래 걸릴 수 있습니다.")
+                    
+                    # 오디오 플레이어
+                    st.audio(uploaded_audio_file.getvalue())
+                    
+                    # 음성을 텍스트로 변환
+                    if st.button("🎯 음성을 텍스트로 변환", type="secondary", use_container_width=True, key="audio_convert_btn"):
+                        # Azure Speech Service 초기화
+                        speech_config = init_speech_config()
+                        
+                        if speech_config:
+                            with st.spinner("🎯 음성을 텍스트로 변환 중입니다... (시간이 다소 걸릴 수 있습니다)"):
+                                # 임시 파일로 저장
+                                file_extension = os.path.splitext(uploaded_audio_file.name)[1]
+                                with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp_file:
+                                    tmp_file.write(uploaded_audio_file.getvalue())
+                                    tmp_file_path = tmp_file.name
+                                
+                                try:
+                                    # speech_utils의 함수 사용
+                                    transcript = speech_to_text_safe(tmp_file_path, speech_config)
+                                    
+                                    if transcript and transcript.strip():
+                                        meeting_content = transcript
+                                        st.success("✅ 음성 인식이 완료되었습니다!")
+                                        
+                                        # 변환된 텍스트 표시
+                                        with st.expander("📄 변환된 텍스트 보기", expanded=True):
+                                            st.text_area("변환된 회의록", meeting_content, height=200, disabled=True, key="audio_transcript_preview")
+                                        
+                                        # 세션에 저장
+                                        st.session_state["converted_meeting_content"] = meeting_content
+                                    else:
+                                        st.error("❌ 음성 인식에 실패했습니다. 파일을 확인하거나 다른 형식으로 시도해보세요.")
+                                
+                                finally:
+                                    # 임시 파일 정리
+                                    try:
+                                        os.unlink(tmp_file_path)
+                                    except:
+                                        pass
+                        else:
+                            st.error("❌ Azure Speech 서비스 설정이 올바르지 않습니다.")
+                            st.warning("""
+                            **환경변수 확인이 필요합니다:**
+                            - AZURE_SPEECH_KEY: Azure Speech 서비스 키
+                            - AZURE_SPEECH_REGION: Azure Speech 서비스 지역 (예: koreacentral)
+                            """)
+                    
+                    # 이전에 변환된 내용이 있으면 표시
+                    if "converted_meeting_content" in st.session_state:
+                        meeting_content = st.session_state["converted_meeting_content"]
+                        
+                        st.success("✅ 변환된 텍스트를 사용합니다.")
+                        with st.expander("📄 변환된 텍스트 확인", expanded=False):
+                            st.text_area("내용", meeting_content, height=200, disabled=True, key="saved_transcript_preview")
+                        
+                        # 텍스트 편집 옵션 제공
+                        if st.button("✏️ 변환된 텍스트 편집하기", key="edit_transcript_btn"):
+                            st.session_state["edit_mode"] = True
+                        
+                        # 편집 모드
+                        if st.session_state.get("edit_mode", False):
+                            edited_content = st.text_area(
+                                "변환된 텍스트를 수정하세요:",
+                                value=meeting_content,
+                                height=200,
+                                key="edit_transcript_area"
+                            )
+                            
+                            col_edit1, col_edit2 = st.columns(2)
+                            with col_edit1:
+                                if st.button("💾 수정 완료", type="primary", key="save_edit_btn"):
+                                    st.session_state["converted_meeting_content"] = edited_content
+                                    meeting_content = edited_content
+                                    st.session_state["edit_mode"] = False
+                                    st.success("✅ 텍스트가 수정되었습니다!")
+                                    st.rerun()
+                            with col_edit2:
+                                if st.button("❌ 편집 취소", key="cancel_edit_btn"):
+                                    st.session_state["edit_mode"] = False
+                                    st.rerun()
+            
             
             else:  # 직접 입력
                 meeting_content = st.text_area(
