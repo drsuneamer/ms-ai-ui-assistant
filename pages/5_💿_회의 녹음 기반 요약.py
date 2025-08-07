@@ -1,122 +1,121 @@
 from dotenv import load_dotenv
-import os
+import os, tempfile, wave
 import streamlit as st
 import azure.cognitiveservices.speech as speechsdk
-from langchain_openai import AzureChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
-import tempfile
-import wave
-import io
 from utils.speech_utils import init_speech_config, speech_to_text_safe
-
+from utils.langchain_utils import init_langchain_client
 
 # 환경변수 로드
 load_dotenv()
+llm_name = os.getenv("AZURE_OPENAI_LLM_4o")  # 음성 처리 위해 mini 대신 GPT-4o 사용
 
 # 페이지 설정
 st.set_page_config(page_title="회의 녹음 기반 요약", page_icon="💿")
 st.title("💿 회의 녹음 기반 요약")
-st.markdown("음성 파일을 업로드하면 AI가 자동으로 텍스트 변환 후 회의 내용을 요약해드립니다.")
+st.markdown("WAV 형식의 음성 파일을 업로드하면 AI가 자동으로 텍스트 변환 후 회의 내용을 요약해드립니다.")
 
-
-# LangChain Azure OpenAI 클라이언트 설정
-@st.cache_resource
-def init_langchain_client():
-    try:
-        llm = AzureChatOpenAI(
-            azure_deployment=os.getenv("AZURE_OPENAI_LLM_GPT4"),
-            api_version=os.getenv("OPENAI_API_VERSION"),
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            api_key=os.getenv("OPENAI_API_KEY"),
-            temperature=0.1
-        )
-        return llm
-    except Exception as e:
-        st.error(f"LangChain 클라이언트 초기화 실패: {e}")
-        return None
-
-# 오디오 파일 검증 및 변환 함수 (강화됨)
-def validate_and_prepare_audio(file_data, file_name):
-    """오디오 파일 검증 및 Azure Speech SDK 호환 형식으로 준비"""
+# WAV 파일 검증 및 준비 함수
+def validate_and_prepare_wav_audio(file_data, file_name):
+    """WAV 파일 검증 및 Azure Speech SDK 호환 형식으로 준비"""
     try:
         file_extension = os.path.splitext(file_name)[1].lower()
         
+        # WAV 파일만 허용
+        if file_extension != '.wav':
+            st.error(f"❌ {file_extension.upper()} 파일은 지원하지 않습니다. WAV 파일만 업로드해주세요.")
+            return None, False
+        
         # 임시 파일 생성
-        with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp_file:
             tmp_file.write(file_data)
             tmp_file_path = tmp_file.name
         
-        # WAV 파일의 경우 상세 검증
-        if file_extension == '.wav':
-            try:
-                with wave.open(tmp_file_path, 'rb') as wav_file:
-                    channels = wav_file.getnchannels()
-                    sample_width = wav_file.getsampwidth()
-                    frame_rate = wav_file.getframerate()
-                    frames = wav_file.getnframes()
-                    duration = frames / frame_rate
-                    
-                    st.info(f"📊 WAV 파일 정보: {channels}채널, {sample_width*8}bit, {frame_rate}Hz, {duration:.1f}초")
-                    
-                    # Azure Speech SDK 호환성 확인
-                    if channels > 2:
-                        st.warning("⚠️ 채널 수가 많습니다. 1-2채널을 권장합니다.")
-                    if sample_width not in [1, 2, 3, 4]:
-                        st.warning("⚠️ 지원하지 않는 비트 깊이입니다.")
-                    if frame_rate < 8000 or frame_rate > 48000:
-                        st.warning("⚠️ 샘플링 레이트가 권장 범위(8-48kHz)를 벗어납니다.")
-                        
-                    return tmp_file_path, True
-                    
-            except wave.Error as e:
-                st.error(f"WAV 파일이 손상되었거나 지원하지 않는 형식입니다: {e}")
-                os.unlink(tmp_file_path)
-                return None, False
+        # WAV 파일 상세 검증
+        try:
+            with wave.open(tmp_file_path, 'rb') as wav_file:
+                channels = wav_file.getnchannels()
+                sample_width = wav_file.getsampwidth()
+                frame_rate = wav_file.getframerate()
+                frames = wav_file.getnframes()
+                duration = frames / frame_rate
                 
-        else:
-            # MP3, M4A 등 다른 형식
-            file_size_mb = len(file_data) / (1024 * 1024)
-            st.info(f"📊 {file_extension.upper()} 파일 크기: {file_size_mb:.2f} MB")
-            return tmp_file_path, True
+                st.success(f"""
+                **✅ WAV 파일 정보:**
+                - 채널: {channels}개 {'✅' if channels <= 2 else '⚠️'}
+                - 비트 깊이: {sample_width * 8}bit {'✅' if sample_width == 2 else '⚠️'}
+                - 샘플링 레이트: {frame_rate:,}Hz {'✅' if 8000 <= frame_rate <= 48000 else '⚠️'}
+                - 길이: {duration:.1f}초
+                """)
+                
+                # Azure Speech SDK 호환성 경고
+                warnings = []
+                if channels > 2:
+                    warnings.append("⚠️ 채널 수가 많습니다. 모노(1채널) 또는 스테레오(2채널)를 권장합니다.")
+                if sample_width != 2:
+                    warnings.append("⚠️ 16-bit PCM을 권장합니다.")
+                if frame_rate < 8000 or frame_rate > 48000:
+                    warnings.append("⚠️ 샘플링 레이트가 권장 범위(8-48kHz)를 벗어납니다.")
+                
+                if warnings:
+                    for warning in warnings:
+                        st.warning(warning)
+                    st.info("💡 파일이 제대로 인식되지 않으면 권장 설정으로 변환해보세요.")
+                
+                return tmp_file_path, True
+                
+        except wave.Error as e:
+            st.error(f"❌ WAV 파일이 손상되었거나 지원하지 않는 형식입니다: {e}")
+            os.unlink(tmp_file_path)
+            return None, False
             
     except Exception as e:
-        st.error(f"파일 준비 중 오류 발생: {e}")
+        st.error(f"❌ 파일 준비 중 오류 발생: {e}")
         return None, False
-
 
 # 회의 내용 요약 함수
 def summarize_meeting(llm, transcript):
     """회의 텍스트를 요약하는 함수"""
     system_prompt = """
     당신은 회의 내용을 전문적으로 요약하는 AI 어시스턴트입니다.
-    다음 회의 녹취록을 분석하여 체계적으로 요약해주세요:
+    음성에서 변환된 텍스트이므로 일부 불완전한 부분이 있을 수 있습니다.
+    맥락을 파악하여 의미를 정확히 전달하도록 요약해주세요.
 
     **요약 형식:**
     ## 📋 회의 요약
 
     ### 🎯 주요 안건
-    - 논의된 핵심 주제들을 나열
+    - 논의된 핵심 주제들을 명확하게 정리
 
     ### 💡 주요 결정사항
-    - 회의에서 결정된 중요한 사항들
+    - 회의에서 결정된 구체적인 사항들
+    - 합의된 내용과 반대 의견 구분
 
     ### 📝 액션 아이템
-    - 담당자: 해야 할 일
-    - 기한: 언제까지
+    - 담당자: 구체적인 업무 내용
+    - 기한: 명시된 또는 추정되는 완료 시점
 
     ### 🔍 핵심 키워드
-    - 회의에서 자주 언급된 키워드들
+    - 회의에서 중요하게 다뤄진 주요 개념들
 
     ### 📊 회의 분석
-    - 회의 분위기, 참석자 의견 등 전반적인 분석
+    - 참석자들의 주요 의견과 분위기
+    - 향후 진행 방향 및 우려사항
 
-    명확하고 간결하게 요약하되, 중요한 정보는 빠뜨리지 마세요.
+    **주의사항:**
+    - 음성 변환 시 발생할 수 있는 오타나 어색한 표현은 자연스럽게 교정
+    - 불분명한 부분은 앞뒤 맥락으로 추정하여 명확히 표현
+    - 중요한 수치나 날짜는 특별히 주의하여 정확히 기록
     """
     
     try:
         messages = [
             SystemMessage(content=system_prompt),
-            HumanMessage(content=f"다음 회의 녹취록을 요약해주세요:\n\n{transcript}")
+            HumanMessage(content=f"""다음은 음성에서 변환된 회의 녹취록입니다:
+
+{transcript}
+
+위 내용을 체계적으로 요약하고, 음성 변환 과정에서 발생한 불완전한 부분들을 맥락에 맞게 보완해주세요.""")
         ]
         
         response = llm.invoke(messages)
@@ -130,7 +129,7 @@ def summarize_meeting(llm, transcript):
 def main():
     # 클라이언트 초기화
     speech_config = init_speech_config()
-    llm = init_langchain_client()
+    llm = init_langchain_client(llm_name, 0.1)
     
     if not speech_config or not llm:
         st.stop()
@@ -139,29 +138,28 @@ def main():
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        st.subheader("🎤 음성 파일 업로드")
+        st.subheader("🎤 WAV 음성 파일 업로드")
         
-        # 개선된 파일 형식 안내
+        # WAV 전용 안내
         st.info("""
-        **📁 권장 파일 형식 (안정성 순):**
-        1. **MP3**: 가장 안정적이고 호환성 좋음 ⭐⭐⭐
-        2. **M4A**: 일반적으로 잘 작동함 ⭐⭐
-        3. **WAV**: PCM 16bit만 권장, 헤더 오류 가능 ⭐
+        **📁 지원 파일 형식: WAV만 허용**
         
-        **🚫 피해야 할 것:**
-        - 손상된 파일, 비표준 인코딩
-        - 100MB 초과 파일 (나누어서 업로드)
+        **✅ 권장 WAV 설정:**
+        - 형식: PCM (압축되지 않은 WAV)
+        - 비트 깊이: 16-bit
+        - 샘플링 레이트: 16kHz 또는 48kHz
+        - 채널: 모노(1채널) 권장, 스테레오(2채널) 가능
         """)
         
-        # 파일 업로더
+        # WAV 파일만 허용하는 업로더
         uploaded_file = st.file_uploader(
-            "회의 녹음 파일을 업로드하세요",
-            type=["wav", "mp3", "m4a"],
-            help="MP3 파일을 가장 권장합니다"
+            "WAV 회의 녹음 파일을 업로드하세요",
+            type=["wav"],  # WAV만 허용
+            help="WAV 형식만 지원합니다. 다른 형식은 WAV로 변환 후 업로드해주세요."
         )
         
         if uploaded_file is not None:
-            st.success(f"✅ 파일 업로드 완료: {uploaded_file.name}")
+            st.success(f"✅ WAV 파일 업로드 완료: {uploaded_file.name}")
             
             # 파일 정보 표시
             file_size = len(uploaded_file.getvalue()) / (1024 * 1024)  # MB
@@ -179,20 +177,21 @@ def main():
             
             # 변환 시작 버튼
             if st.button("🚀 음성 → 텍스트 변환 및 요약", type="primary", use_container_width=True):
-                # 파일 검증 및 준비
-                with st.spinner("📋 파일 검증 및 준비 중..."):
-                    tmp_file_path, is_valid = validate_and_prepare_audio(
+                # WAV 파일 검증 및 준비
+                with st.spinner("📋 WAV 파일 검증 및 준비 중..."):
+                    tmp_file_path, is_valid = validate_and_prepare_wav_audio(
                         uploaded_file.getvalue(), 
                         uploaded_file.name
                     )
                 
                 if not is_valid or not tmp_file_path:
-                    st.error("❌ 파일 준비에 실패했습니다.")
+                    st.error("❌ WAV 파일 준비에 실패했습니다.")
                     return
                 
                 try:
                     # 음성을 텍스트로 변환
-                    transcript = speech_to_text_safe(tmp_file_path, speech_config)
+                    with st.spinner("🎯 음성을 텍스트로 변환 중... (WAV 파일 처리 중)"):
+                        transcript = speech_to_text_safe(tmp_file_path, speech_config)
                     
                     if transcript and transcript.strip():
                         st.session_state["transcript"] = transcript
@@ -206,7 +205,25 @@ def main():
                                 st.balloons()  # 성공 애니메이션
                                 st.success("🎉 변환 및 요약이 완료되었습니다!")
                     else:
-                        st.error("❌ 음성 인식에 실패했습니다. 파일 형식을 확인하거나 MP3로 변환해보세요.")
+                        st.error("""
+                        ❌ 음성 인식에 실패했습니다.
+                        
+                        **해결 방법:**
+                        1. WAV 파일이 손상되지 않았는지 확인
+                        2. 권장 설정(16-bit PCM, 16kHz)으로 변환
+                        3. 배경 소음이 적은 깨끗한 녹음 사용
+                        4. 파일 크기가 너무 크지 않은지 확인
+                        """)
+                
+                except Exception as e:
+                    st.error(f"❌ 음성 변환 중 오류 발생: {e}")
+                    st.error("""
+                    **WAV 파일 오류 해결 방법:**
+                    1. 다른 WAV 파일로 테스트
+                    2. 오디오 편집 프로그램으로 파일 재저장
+                    3. 권장 설정으로 변환:
+                       `ffmpeg -i input.wav -acodec pcm_s16le -ar 16000 -ac 1 output.wav`
+                    """)
                 
                 finally:
                     # 임시 파일 삭제
@@ -252,70 +269,7 @@ def main():
                     st.text_area("변환된 텍스트", st.session_state["transcript"], height=300, disabled=True, key="transcript_display")
         
         else:
-            st.info("👆 음성 파일을 업로드하고 '변환 및 요약' 버튼을 눌러주세요.")
-            
-            # 상세 문제 해결 가이드
-            st.markdown("""
-            **🚨 SPXERR_INVALID_HEADER 문제 진단:**
-            
-            **🔍 단계별 체크리스트:**
-            
-            **1️⃣ 환경변수 확인**
-            ```
-            AZURE_SPEECH_KEY=당신의32자키 (따옴표없이)
-            AZURE_SPEECH_REGION=koreacentral (소문자)
-            ```
-            
-            **2️⃣ Azure Portal 확인**
-            - Speech 서비스가 활성화되어 있는가?
-            - 올바른 구독에서 키를 가져왔는가?
-            - 키를 재생성해볼 수 있는가?
-            
-            **3️⃣ 네트워크 & 권한**
-            - 방화벽이 Azure 접속을 차단하고 있는가?
-            - 프록시 설정이 있는가?
-            - 임시 폴더 쓰기 권한이 있는가?
-            
-            **4️⃣ 파일 문제**
-            - 다른 미디어 플레이어에서 재생되는가?
-            - MP3로 변환했는가?
-            - 파일 크기가 적당한가? (<50MB 권장)
-            
-            **🆘 긴급 해결책:**
-            - `.env` 파일 재생성
-            - Azure Speech 키 새로 발급
-            - 다른 리전으로 시도 (예: eastus)
-            - 작은 테스트 파일로 시도
-            """)
-            
-            # 환경변수 디버깅 도구 추가
-            with st.expander("🔧 환경변수 디버깅 도구"):
-                if st.button("환경변수 체크", type="secondary"):
-                    key = os.getenv("AZURE_SPEECH_KEY", "")
-                    region = os.getenv("AZURE_SPEECH_REGION", "")
-                    
-                    st.write("**환경변수 상태:**")
-                    st.write(f"- AZURE_SPEECH_KEY: {'설정됨' if key else '❌ 미설정'} (길이: {len(key)})")
-                    st.write(f"- AZURE_SPEECH_REGION: {region if region else '❌ 미설정'}")
-                    
-                    if key and region:
-                        st.write("**기본 검증:**")
-                        if len(key) >= 30:
-                            st.write("✅ 키 길이 적절")
-                        else:
-                            st.write("⚠️ 키가 너무 짧을 수 있음")
-                            
-                        if region.lower() in ['koreacentral', 'eastus', 'westus2']:
-                            st.write("✅ 일반적인 리전")
-                        else:
-                            st.write(f"⚠️ 리전 확인 필요: {region}")
-                    
-                    # 간단한 연결 테스트 (실제 API 호출 없이)
-                    try:
-                        test_config = speechsdk.SpeechConfig(subscription=key, region=region)
-                        st.write("✅ SpeechConfig 생성 가능")
-                    except Exception as e:
-                        st.write(f"❌ SpeechConfig 생성 실패: {e}")
+            st.info("👆 WAV 음성 파일을 업로드하고 '변환 및 요약' 버튼을 눌러주세요.")
 
 if __name__ == "__main__":
     main()

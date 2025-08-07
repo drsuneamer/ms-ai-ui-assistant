@@ -21,7 +21,7 @@ st.set_page_config(
 )
 
 st.title("💡 고민이 될 때 AI에게 질문하기")
-st.markdown("UI/UX, 마이크로카피, 기타 사례 등 궁금한 점을 AI에게 자유롭게 질문하거나, 회의록을 입력해 조언을 받아보세요. Azure AI Search와 웹 검색을 활용해 답변합니다.")
+st.markdown("UI/UX, 마이크로카피, 기타 사례 등 궁금한 점을 AI에게 자유롭게 질문하거나, 회의록을 입력해 조언을 받아보세요.")
 
 col1, col2 = st.columns([1, 1])
 

@@ -1,10 +1,10 @@
 from dotenv import load_dotenv
-import os
+import os, json, re
 import streamlit as st
 from langchain_openai import AzureChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
-import json
-import re
+from utils.langfuse_monitor import langfuse_monitor
+from utils.langchain_utils import init_langchain_client
 
 # 회의록에서 도출된 요구사항과 현재 코드를 입력받아 개선된 코드를 제공하는 페이지
 # JSON 형태의 요구사항과 HTML/React/JavaScript/JSP 코드를 분석하여 개선안 제시
@@ -14,21 +14,6 @@ load_dotenv()
 llm_name = os.getenv("AZURE_OPENAI_LLM_MINI")
 # llm_name = os.getenv("AZURE_OPENAI_LLM_GPT4")
 
-# LangChain Azure OpenAI 클라이언트 설정
-@st.cache_resource  # 리소스를 한 번만 로드하거나 연결하고, 이후의 호출에서는 캐싱된 인스턴스 재사용
-def init_langchain_client():
-    try:
-        llm = AzureChatOpenAI(
-            azure_deployment=llm_name,
-            api_version=os.getenv("OPENAI_API_VERSION"),
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            api_key=os.getenv("OPENAI_API_KEY"),
-            temperature=0.1  # 약간의 창의성 허용
-        )
-        return llm
-    except Exception as e:
-        st.error(f"LangChain Azure OpenAI 연결 실패: {str(e)}")
-        return None
 
 # 요구사항 파싱 함수
 def parse_requirements(requirements_text):
@@ -116,6 +101,7 @@ def create_system_prompt(code_language, focus_area):
     
     return base_prompt
 
+@langfuse_monitor(name="개선된 코드 제공")  
 def analyze_and_improve_code(llm, requirements, current_code, code_language, focus_area):
     """요구사항과 현재 코드를 분석하여 개선된 코드 제공"""
     try:
@@ -246,7 +232,7 @@ def main():
     st.markdown("회의에서 도출된 요구사항을 바탕으로 기존 코드를 개선해드립니다.")
     
     # LangChain 클라이언트 초기화
-    llm = init_langchain_client()
+    llm = init_langchain_client(llm_name, 0.1)  # 약간의 창의성 허용
     if not llm:
         st.error("❌ LangChain Azure OpenAI 연결에 실패했습니다.")
         return

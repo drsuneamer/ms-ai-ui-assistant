@@ -1,18 +1,14 @@
 from dotenv import load_dotenv
-import os
 import streamlit as st
-from langchain_openai import AzureChatOpenAI
+import os, json, re, datetime
+import tempfile # 오디오 인식 기능
 from langchain.schema import HumanMessage, SystemMessage
-import json
-import re
-import datetime
-import tempfile
-from utils.speech_utils import init_speech_config, speech_to_text_safe
+from utils.speech_utils import init_speech_config, speech_to_text_safe, validate_wav_file_only
 from utils.langchain_utils import init_langchain_client
-
 
 # 회의록에서 도출된 요구사항과 현재 코드를 입력받아 개선된 코드를 제공하는 페이지
 # JSON 형태의 요구사항과 HTML/React/JavaScript/JSP 코드를 분석하여 개선안 제시
+# Azure Speech Service는 WAV 형식에서 가장 안정적인 성능을 제공합니다.
 
 # 환경변수 로드
 load_dotenv()
@@ -457,9 +453,8 @@ def main():
             # 회의록 입력 방식
             input_method = st.radio(
                 "입력 방식 선택:",
-                ["📁 텍스트 파일 업로드", "🎤 음성 파일 업로드", "📝 직접 입력"]
+                ["📁 텍스트 파일 업로드", "🎤 WAV 음성 파일 업로드", "📝 직접 입력"]
             )
-            
             
             meeting_content = ""
             if input_method == "📁 텍스트 파일 업로드":
@@ -480,18 +475,28 @@ def main():
                     else:
                         st.error("텍스트 파일(.txt)과 마크다운 파일(.md)만 지원됩니다.")
             
-            elif input_method == "🎤 음성 파일 업로드":
-                st.info("🎵 음성 파일을 업로드하면 자동으로 텍스트로 변환됩니다.")
+            elif input_method == "🎤 WAV 음성 파일 업로드":
+                st.info("""
+                🎵 **WAV 음성 파일 전용 서비스**
+                
+                Azure Speech Service 최적화를 위해 **WAV 파일만** 지원합니다.
+                
+                **✅ 권장 WAV 설정:**
+                - 형식: PCM (압축되지 않은 WAV)
+                - 비트 깊이: 16-bit
+                - 샘플링 레이트: 16kHz 또는 48kHz
+                - 채널: 모노(1채널) 권장
+                """)
                 
                 uploaded_audio_file = st.file_uploader(
                     "회의 녹음 파일을 업로드하세요:",
-                    type=['wav', 'mp3', 'm4a', 'flac', 'aac'],
-                    help="다양한 음성 파일 형식을 지원합니다. 자동으로 텍스트로 변환됩니다.",
-                    key="audio_file_uploader"
+                    type=['wav'],  # WAV만 허용
+                    help="WAV 형식만 지원합니다. 다른 형식은 WAV로 변환 후 업로드해주세요.",
+                    key="wav_audio_file_uploader"
                 )
                 
                 if uploaded_audio_file is not None:
-                    st.success(f"✅ 음성 파일이 업로드되었습니다: {uploaded_audio_file.name}")
+                    st.success(f"✅ WAV 음성 파일이 업로드되었습니다: {uploaded_audio_file.name}")
                     
                     # 파일 정보 표시
                     file_size = len(uploaded_audio_file.getvalue()) / (1024 * 1024)  # MB
@@ -499,23 +504,30 @@ def main():
                     
                     # 파일 크기 제한 확인
                     if file_size > 100:
-                        st.warning("⚠️ 파일이 100MB를 초과합니다. 처리 시간이 오래 걸릴 수 있습니다.")
+                        st.error("❌ 파일이 100MB를 초과합니다. 더 작은 파일로 나누어 업로드해주세요.")
+                        st.stop()
+                    elif file_size > 50:
+                        st.warning("⚠️ 파일이 50MB를 초과합니다. 처리 시간이 오래 걸릴 수 있습니다.")
                     
                     # 오디오 플레이어
                     st.audio(uploaded_audio_file.getvalue())
                     
                     # 음성을 텍스트로 변환
-                    if st.button("🎯 음성을 텍스트로 변환", type="secondary", use_container_width=True, key="audio_convert_btn"):
+                    if st.button("🎯 WAV 음성을 텍스트로 변환", type="secondary", use_container_width=True, key="wav_audio_convert_btn"):
                         # Azure Speech Service 초기화
                         speech_config = init_speech_config()
                         
                         if speech_config:
-                            with st.spinner("🎯 음성을 텍스트로 변환 중입니다... (시간이 다소 걸릴 수 있습니다)"):
-                                # 임시 파일로 저장
-                                file_extension = os.path.splitext(uploaded_audio_file.name)[1]
-                                with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp_file:
-                                    tmp_file.write(uploaded_audio_file.getvalue())
-                                    tmp_file_path = tmp_file.name
+                            with st.spinner("🎯 WAV 음성을 텍스트로 변환 중입니다... (WAV 파일 처리 중)"):
+                                # WAV 파일 검증 및 준비
+                                tmp_file_path, is_valid = validate_wav_file_only(
+                                    uploaded_audio_file.getvalue(), 
+                                    uploaded_audio_file.name
+                                )
+                                
+                                if not is_valid or not tmp_file_path:
+                                    st.error("❌ WAV 파일 준비에 실패했습니다.")
+                                    return
                                 
                                 try:
                                     # speech_utils의 함수 사용
@@ -523,21 +535,30 @@ def main():
                                     
                                     if transcript and transcript.strip():
                                         meeting_content = transcript
-                                        st.success("✅ 음성 인식이 완료되었습니다!")
+                                        st.success("✅ WAV 음성 인식이 완료되었습니다!")
                                         
                                         # 변환된 텍스트 표시
                                         with st.expander("📄 변환된 텍스트 보기", expanded=True):
-                                            st.text_area("변환된 회의록", meeting_content, height=200, disabled=True, key="audio_transcript_preview")
+                                            st.text_area("변환된 회의록", meeting_content, height=200, disabled=True, key="wav_audio_transcript_preview")
                                         
                                         # 세션에 저장
                                         st.session_state["converted_meeting_content"] = meeting_content
                                     else:
-                                        st.error("❌ 음성 인식에 실패했습니다. 파일을 확인하거나 다른 형식으로 시도해보세요.")
+                                        st.error("""
+                                        ❌ WAV 음성 인식에 실패했습니다.
+                                        
+                                        **해결 방법:**
+                                        1. WAV 파일이 손상되지 않았는지 확인
+                                        2. 권장 설정(16-bit PCM, 16kHz)으로 변환
+                                        3. 배경 소음이 적은 깨끗한 녹음 사용
+                                        4. 파일 크기가 너무 크지 않은지 확인
+                                        """)
                                 
                                 finally:
                                     # 임시 파일 정리
                                     try:
-                                        os.unlink(tmp_file_path)
+                                        if tmp_file_path and os.path.exists(tmp_file_path):
+                                            os.unlink(tmp_file_path)
                                     except:
                                         pass
                         else:
@@ -552,12 +573,12 @@ def main():
                     if "converted_meeting_content" in st.session_state:
                         meeting_content = st.session_state["converted_meeting_content"]
                         
-                        st.success("✅ 변환된 텍스트를 사용합니다.")
+                        st.success("✅ 변환된 WAV 텍스트를 사용합니다.")
                         with st.expander("📄 변환된 텍스트 확인", expanded=False):
-                            st.text_area("내용", meeting_content, height=200, disabled=True, key="saved_transcript_preview")
+                            st.text_area("내용", meeting_content, height=200, disabled=True, key="saved_wav_transcript_preview")
                         
                         # 텍스트 편집 옵션 제공
-                        if st.button("✏️ 변환된 텍스트 편집하기", key="edit_transcript_btn"):
+                        if st.button("✏️ 변환된 텍스트 편집하기", key="edit_wav_transcript_btn"):
                             st.session_state["edit_mode"] = True
                         
                         # 편집 모드
@@ -566,22 +587,21 @@ def main():
                                 "변환된 텍스트를 수정하세요:",
                                 value=meeting_content,
                                 height=200,
-                                key="edit_transcript_area"
+                                key="edit_wav_transcript_area"
                             )
                             
                             col_edit1, col_edit2 = st.columns(2)
                             with col_edit1:
-                                if st.button("💾 수정 완료", type="primary", key="save_edit_btn"):
+                                if st.button("💾 수정 완료", type="primary", key="save_wav_edit_btn"):
                                     st.session_state["converted_meeting_content"] = edited_content
                                     meeting_content = edited_content
                                     st.session_state["edit_mode"] = False
                                     st.success("✅ 텍스트가 수정되었습니다!")
                                     st.rerun()
                             with col_edit2:
-                                if st.button("❌ 편집 취소", key="cancel_edit_btn"):
+                                if st.button("❌ 편집 취소", key="cancel_wav_edit_btn"):
                                     st.session_state["edit_mode"] = False
                                     st.rerun()
-            
             
             else:  # 직접 입력
                 meeting_content = st.text_area(
@@ -633,7 +653,7 @@ def main():
                 else:
                     st.error("분석 중 오류가 발생했습니다.")
             else:
-                st.info("👈 좌측에서 회의록을 입력하고 분석을 실행해주세요.")
+                st.info("👈 좌측에 회의록을 입력하고 분석을 실행해주세요.")
     
     # === TAB 2: 코드 입력 & 개선 ===
     with tab2:
@@ -909,6 +929,7 @@ def create_integrated_report(meeting_content, requirements_data, improvement_dat
 - **생성 일시:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 - **대상 언어:** {code_language.upper()}
 - **프로세스:** 회의록 분석 → 요구사항 도출 → 코드 개선
+- **음성 처리:** Azure Speech Service (WAV 전용)
 
 ---
 
@@ -1002,21 +1023,28 @@ def create_integrated_report(meeting_content, requirements_data, improvement_dat
 
 ## 📈 4. 결론 및 권장사항
 
-이번 개선을 통해 다음과 같은 효과를 기대할 수 있습니다:
+이번 Azure Speech Service 기반 개선을 통해 다음과 같은 효과를 기대할 수 있습니다:
 
 1. **사용자 경험 개선**: 회의에서 제기된 사용자 불편사항 해결
 2. **접근성 향상**: 웹 접근성 가이드라인 준수로 더 많은 사용자가 이용 가능
 3. **코드 품질 향상**: 최신 모범 사례 적용으로 유지보수성 개선
 4. **반응형 지원**: 다양한 디바이스에서 일관된 사용자 경험 제공
+5. **Azure 통합**: Azure Speech Service를 활용한 안정적인 음성 처리
+
+### Azure Speech Service 활용 효과
+- **WAV 파일 최적화**: 최고 품질의 음성 인식 정확도
+- **한국어 지원**: Azure의 우수한 한국어 음성 인식 성능
+- **확장성**: Azure 클라우드 기반 안정적인 서비스 제공
 
 ### 추후 개선 방향
 - 사용자 테스트를 통한 개선 효과 검증
 - A/B 테스트를 통한 성과 측정
 - 지속적인 사용자 피드백 수집 및 반영
+- Azure 서비스와의 추가 통합 고려
 
 ---
 
-*본 보고서는 AI 기반 UI/UX 개선 시스템을 통해 자동 생성되었습니다.*
+*본 보고서는 Azure 기반 AI UI/UX 개선 시스템을 통해 자동 생성되었습니다.*
 """
     
     return report
