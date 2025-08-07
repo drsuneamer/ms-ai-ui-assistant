@@ -98,7 +98,7 @@ streamlit run Home.py
 - 전체 개선, 사용자 경험, 접근성, 반응형 디자인 등 개선 집중 영역을 선택할 수 있다.
 
 ![ezgif-8bd73ba992a59a](https://github.com/user-attachments/assets/8b84723c-6036-4102-9582-5ef5a904bf30)
-![ezgif-33d2aced1402bc](https://github.com/user-attachments/assets/0010bd35-3edc-495d-affa-8048e5a98c0b)
+![ezgif-18b42cb0146202](https://github.com/user-attachments/assets/3a960d64-b1d4-4333-a9c6-54bbcf040e76)
 ![ezgif-368fdf2ecfd357](https://github.com/user-attachments/assets/3e84a44b-4549-4516-8c71-e7f7a129e090)
 
 
