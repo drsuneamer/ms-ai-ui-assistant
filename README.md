@@ -14,7 +14,7 @@ python -m venv venv
 
 패키지 설치
 ```bash
-pip install streamlit openai python-dotenv langchain langchain-openai langchain-community azure-cognitiveservices-speech
+pip install streamlit openai python-dotenv langchain langchain-openai langchain-community azure-cognitiveservices-speech langfuse
 ```
 
 requirements.txt 만드는 법
