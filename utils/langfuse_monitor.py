@@ -2,6 +2,7 @@
 import os
 import streamlit as st
 from dotenv import load_dotenv
+import requests
 
 load_dotenv()
 
@@ -73,3 +74,4 @@ def log_generation(name, input_text, output_text, model=None, metadata=None):
 def is_monitoring_enabled():
     """모니터링 활성화 상태 확인"""
     return LANGFUSE_AVAILABLE
+

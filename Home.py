@@ -1,15 +1,56 @@
 import streamlit as st
+from utils.langfuse_monitor import is_monitoring_enabled
 
-st.set_page_config(
-    page_title="HELP_MEET",
-    page_icon="📑"
-)
+def show_admin_page():
+    st.title("🔒 관리자 페이지")
+    
+    if is_monitoring_enabled():
+        # Langfuse 대시보드 링크
+        import os
+        host = os.environ.get("LANGFUSE_HOST", "https://cloud.langfuse.com")
+        st.markdown(f"[Langfuse 대시보드 열기]({host})")
+        st.success("✅ 모니터링이 활성화되어 있습니다")
+    else:
+        st.warning("⚠️ Langfuse 모니터링이 비활성화되어 있습니다")
 
-st.title("HELP_MEET")
-with st.sidebar:
-    st.markdown("🚀 필요한 기능이 있는 페이지를 선택해보세요")
+def login_form():
+    st.title("🔐 관리자 로그인")
+    password = st.text_input("비밀번호를 입력하세요", type="password")
+    
+    if password == st.secrets["admin"]["password"]:
+        st.session_state["authenticated"] = True
+        st.rerun()
+    elif password:
+        st.error("비밀번호가 틀렸습니다.")
 
-st.markdown("""
+# URL 쿼리 파라미터 확인
+query_params = st.query_params
+admin_flag = query_params.get("admin")
+
+
+# 인증 상태 초기화
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
+
+# admin 페이지 접근 여부 확인
+if admin_flag and admin_flag == "true":
+    if st.session_state["authenticated"]:
+        show_admin_page()
+    else:
+        login_form()
+else:
+    # 일반 사용자 화면
+
+    st.set_page_config(
+        page_title="HELP_MEET",
+        page_icon="📑"
+    )
+
+    st.title("HELP_MEET")
+    with st.sidebar:
+        st.markdown("🚀 필요한 기능이 있는 페이지를 선택해보세요")
+
+    st.markdown("""
 ### 📚 기능 소개
 
 <br>\n

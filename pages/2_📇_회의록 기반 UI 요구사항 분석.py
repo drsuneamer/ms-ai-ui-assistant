@@ -64,8 +64,6 @@ SYSTEM_PROMPT = """
 def analyze_meeting_content(llm, content):
     """회의록 내용을 LangChain LLM으로 분석"""
     try:
-        # 추가 로깅 제거! @observe가 모든 걸 자동으로 처리
-        
         # LangChain 메시지 구성
         messages = [
             SystemMessage(content=SYSTEM_PROMPT),

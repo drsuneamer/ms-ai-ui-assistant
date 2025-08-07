@@ -38,3 +38,6 @@ Thumbs.db
 
 # 🚫 기타 프로젝트별 빌드 디렉터리 (필요 시)
 node_modules/
+
+
+.streamlit/secrets.toml
