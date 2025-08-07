@@ -147,6 +147,11 @@ streamlit run Home.py
 
 ![ezgif-5a264bbdff2387](https://github.com/user-attachments/assets/77a5a8f1-c157-4fe0-8564-767aea214c38)
 
+---
 
+### 😌 추가 개선 사항
+
+- 오디오 연속 인식 기능 개선
+- 속도 개선 및 기능 안정화
 
 
