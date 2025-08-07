@@ -4,13 +4,13 @@ import streamlit as st
 from langchain_openai import AzureChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
 import json
-
+import tempfile
+from speech_utils import init_speech_config, speech_to_text_safe
 
 # 사용자의 회의록을 분석하여 UI/UX 개선 요구사항을 도출하는 기능 제공 페이지
-# txt, md 파일 업로드 또는 직접 입력 가능
+# txt, md 파일 업로드, 음성 파일 업로드 또는 직접 입력 가능
 # 회의록 내용은 LangChain LLM을 통해 분석되며, 
 # UI/UX 관련 요구사항과 사용자 피드백을 JSON/MARKDOWN 형식으로 출력
-
 
 # 환경변수 로드
 load_dotenv()
@@ -32,7 +32,7 @@ def init_langchain_client():
         st.error(f"LangChain Azure OpenAI 연결 실패: {str(e)}")
         return None
 
-# 시스템 프롬프트 정의
+# 시스템 프롬프트 정의 (기존과 동일)
 SYSTEM_PROMPT = """
 당신은 회의록을 분석하여 UI/UX 개선 요구사항을 파악하는 전문가입니다.
 
@@ -176,7 +176,7 @@ def main():
     )
     
     st.title("📋 회의록 UI 요구사항 분석기")
-    st.markdown("회의 전문을 업로드하면 AI가 UI/UX 개선 요구사항을 분석해드립니다.")
+    st.markdown("회의 전문을 업로드하거나 음성으로 입력하면 AI가 UI/UX 개선 요구사항을 분석해드립니다.")
     
     # LangChain 클라이언트 초기화
     llm = init_langchain_client()
@@ -213,65 +213,235 @@ def main():
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        st.subheader("📄 회의록 업로드")
+        st.subheader("📄 회의록 입력")
         
-        # 파일 업로드
-        uploaded_file = st.file_uploader("회의 전문을 올려보세요", type=["txt", "md"])
+        # 입력 방식 선택
+        input_method = st.radio(
+            "입력 방식 선택:",
+            ["📁 텍스트 파일 업로드", "🎤 음성 파일 업로드", "📝 직접 입력"]
+        )
         
         content = ""
-        if uploaded_file is not None:
-            content = uploaded_file.read().decode("utf-8")
-            st.text_area("파일 내용 미리보기:", content, height=300, disabled=True)
-        else:
-            st.markdown("또는 직접 입력:")
-            content = st.text_area("회의록 내용을 직접 입력하세요:", height=300, 
-                                 placeholder="회의 내용을 입력해주세요.", key="meeting_input")
+        
+        if input_method == "📁 텍스트 파일 업로드":
+            # 텍스트 파일 업로드
+            uploaded_file = st.file_uploader(
+                "회의 전문 파일을 업로드하세요", 
+                type=["txt", "md"],
+                help="TXT, MD 파일을 지원합니다."
+            )
             
-        # 입력 완료 버튼
-        if st.button("📝 입력 완료", 
-                    type="secondary", 
-                    use_container_width=True):
-            st.session_state["input_ready"] = True
-            st.rerun()
+            if uploaded_file is not None:
+                content = uploaded_file.read().decode("utf-8")
+                st.success("✅ 파일이 업로드되었습니다.")
+                with st.expander("📄 파일 내용 미리보기"):
+                    st.text_area("내용", content, height=200, disabled=True, key="file_preview")
+        
+        elif input_method == "🎤 음성 파일 업로드":
+            # 음성 파일 업로드
+            st.info("🎵 음성 파일을 업로드하면 자동으로 텍스트로 변환됩니다.")
+            
+            uploaded_audio_file = st.file_uploader(
+                "회의 녹음 파일을 업로드하세요:",
+                type=['wav', 'mp3', 'm4a'],
+                help="다양한 음성 파일 형식을 지원합니다."
+            )
+            
+            if uploaded_audio_file is not None:
+                st.success(f"✅ 음성 파일이 업로드되었습니다: {uploaded_audio_file.name}")
+                
+                # 파일 정보 표시
+                file_size = len(uploaded_audio_file.getvalue()) / (1024 * 1024)  # MB
+                st.info(f"📁 파일 크기: {file_size:.2f} MB")
+                
+                if file_size > 50:
+                    st.warning("⚠️ 파일이 50MB를 초과합니다. 처리 시간이 오래 걸릴 수 있습니다.")
+                
+                # 오디오 플레이어
+                st.audio(uploaded_audio_file.getvalue())
+                
+                # 음성을 텍스트로 변환
+                if st.button("🎯 음성을 텍스트로 변환", type="secondary", use_container_width=True):
+                    # Azure Speech Service 초기화
+                    speech_config = init_speech_config()
+                    
+                    if speech_config:
+                        with st.spinner("🎯 음성을 텍스트로 변환 중입니다..."):
+                            # 임시 파일로 저장
+                            file_extension = os.path.splitext(uploaded_audio_file.name)[1]
+                            with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp_file:
+                                tmp_file.write(uploaded_audio_file.getvalue())
+                                tmp_file_path = tmp_file.name
+                            
+                            try:
+                                # speech_utils의 함수 사용
+                                transcript = speech_to_text_safe(tmp_file_path, speech_config)
+                                
+                                if transcript and transcript.strip():
+                                    content = transcript
+                                    st.success("✅ 음성 인식이 완료되었습니다!")
+                                    
+                                    # 변환된 텍스트 표시
+                                    with st.expander("📄 변환된 텍스트 보기", expanded=True):
+                                        st.text_area("변환된 회의록", content, height=200, disabled=True)
+                                    
+                                    # 세션에 저장
+                                    st.session_state["converted_audio_content"] = content
+                                    st.session_state["audio_input_ready"] = True
+                                else:
+                                    st.error("❌ 음성 인식에 실패했습니다. 파일을 확인하거나 다른 형식으로 시도해보세요.")
+                            
+                            finally:
+                                # 임시 파일 정리
+                                try:
+                                    os.unlink(tmp_file_path)
+                                except:
+                                    pass
+                    else:
+                        st.error("❌ Azure Speech 서비스 설정이 올바르지 않습니다.")
+                        st.warning("""
+                        **환경변수 확인이 필요합니다:**
+                        - AZURE_SPEECH_KEY: Azure Speech 서비스 키
+                        - AZURE_SPEECH_REGION: Azure Speech 서비스 지역 (예: koreacentral)
+                        """)
+                
+                # 이전에 변환된 내용이 있으면 표시
+                if "converted_audio_content" in st.session_state:
+                    content = st.session_state["converted_audio_content"]
+                    
+                    st.success("✅ 변환된 텍스트를 사용합니다.")
+                    with st.expander("📄 변환된 텍스트 확인"):
+                        st.text_area("내용", content, height=200, disabled=True)
+                    
+                    # 텍스트 편집 옵션
+                    if st.button("✏️ 변환된 텍스트 편집하기"):
+                        st.session_state["edit_audio_mode"] = True
+                    
+                    # 편집 모드
+                    if st.session_state.get("edit_audio_mode", False):
+                        edited_content = st.text_area(
+                            "변환된 텍스트를 수정하세요:",
+                            value=content,
+                            height=200,
+                            key="edit_audio_area"
+                        )
+                        
+                        col_edit1, col_edit2 = st.columns(2)
+                        with col_edit1:
+                            if st.button("💾 수정 완료", type="primary"):
+                                st.session_state["converted_audio_content"] = edited_content
+                                content = edited_content
+                                st.session_state["edit_audio_mode"] = False
+                                st.success("✅ 텍스트가 수정되었습니다!")
+                                st.rerun()
+                        with col_edit2:
+                            if st.button("❌ 편집 취소"):
+                                st.session_state["edit_audio_mode"] = False
+                                st.rerun()
+        
+        else:  # 직접 입력
+            st.markdown("📝 회의록 내용을 직접 입력하세요:")
+            content = st.text_area(
+                "회의록 내용:", 
+                height=300,
+                placeholder="""예시:
+
+오늘 UI/UX 개선 회의에서 다음과 같은 의견이 나왔습니다:
+
+1. 로그인 버튼이 너무 작아서 클릭하기 어렵다는 의견이 많음
+2. 색상 대비가 낮아서 가독성이 떨어진다는 피드백
+3. 모바일에서 폼이 잘려서 보인다는 문제 제기
+4. 에러 메시지가 사용자 친화적이지 않다는 의견
+
+개선 우선순위:
+- 버튼 크기 확대 (고우선순위)
+- 색상 접근성 개선 (고우선순위)  
+- 반응형 개선 (중우선순위)
+- UX 라이팅 개선 (중우선순위)""",
+                key="direct_meeting_input"
+            )
+            
+            # 직접 입력 시에만 입력 완료 버튼 표시
+            if st.button("📝 입력 완료", 
+                        type="secondary", 
+                        use_container_width=True,
+                        disabled=not content.strip()):
+                st.session_state["direct_input_ready"] = True
+                st.success("✅ 입력이 완료되었습니다!")
     
     with col2:
         st.subheader("🤖 AI 분석 결과")
         
-        # 입력이 준비되었거나 파일이 업로드된 경우
-        is_ready = (uploaded_file is not None) or st.session_state.get("input_ready", False)
+        # 입력이 준비되었는지 확인
+        is_ready = (
+            (input_method == "📁 텍스트 파일 업로드" and content.strip()) or
+            (input_method == "🎤 음성 파일 업로드" and st.session_state.get("audio_input_ready", False)) or
+            (input_method == "📝 직접 입력" and st.session_state.get("direct_input_ready", False))
+        )
         
-        # 분석 결과를 세션 상태에 저장
+        # 분석 실행
         if is_ready and content.strip():
             if st.button("🚀 요구사항 분석 시작", type="primary", use_container_width=True):
                 with st.spinner("🤖 AI가 회의록을 분석 중입니다..."):
                     system_prompt = custom_prompt if 'custom_prompt' in locals() else SYSTEM_PROMPT
                     result = analyze_meeting_content(llm, content)
                     st.session_state["analysis_result"] = result  # 세션 상태에 저장
-
+        
         # 세션 상태에 결과가 있으면 표시 및 다운로드
         if "analysis_result" in st.session_state:
             result = st.session_state["analysis_result"]
             if result["success"]:
                 st.success("✅ 분석이 완료되었습니다!")
                 display_analysis_results(result)
-                st.download_button(
-                    label="📥 분석 결과 다운로드 (JSON)",
-                    data=result["raw"],
-                    file_name="meeting_analysis_result.json",
-                    mime="application/json"
-                )
-                if result["data"]:
-                    md_data = result_to_markdown(result["data"])
+                
+                # 다운로드 버튼
+                col_download1, col_download2 = st.columns(2)
+                with col_download1:
                     st.download_button(
-                        label="📥 분석 결과 다운로드 (Markdown)",
-                        data=md_data,
-                        file_name="meeting_analysis_result.md",
-                        mime="text/markdown"
+                        label="📥 분석 결과 (JSON)",
+                        data=result["raw"],
+                        file_name="meeting_analysis_result.json",
+                        mime="application/json",
+                        use_container_width=True
                     )
+                with col_download2:
+                    if result["data"]:
+                        md_data = result_to_markdown(result["data"])
+                        st.download_button(
+                            label="📥 분석 결과 (MD)",
+                            data=md_data,
+                            file_name="meeting_analysis_result.md",
+                            mime="text/markdown",
+                            use_container_width=True
+                        )
             else:
                 st.error(f"❌ 분석 중 오류가 발생했습니다: {result['error']}")
         else:
-            st.info("👆 회의록을 업로드하거나 직접 입력 후 '입력 완료' 버튼을 눌러주세요.")
+            st.info("👆 회의록을 입력하고 '분석 시작' 버튼을 눌러주세요.")
+            
+            # 입력 방식별 안내
+            if input_method == "📁 텍스트 파일 업로드":
+                st.markdown("""
+                **📁 파일 업로드 팁:**
+                - TXT, MD 파일을 지원합니다
+                - UTF-8 인코딩을 권장합니다
+                - 파일 크기는 10MB 이하를 권장합니다
+                """)
+            elif input_method == "🎤 음성 파일 업로드":
+                st.markdown("""
+                **🎤 음성 파일 업로드 팁:**
+                - MP3 파일을 가장 권장합니다
+                - 명확한 음성일수록 인식률이 높습니다
+                - 50MB 이하의 파일을 권장합니다
+                - 변환 후 텍스트를 검토하고 편집할 수 있습니다
+                """)
+            else:
+                st.markdown("""
+                **📝 직접 입력 팁:**
+                - 회의 내용을 자세히 입력할수록 정확한 분석이 가능합니다
+                - UI/UX 관련 피드백을 구체적으로 작성해주세요
+                - 우선순위나 중요도를 언급하면 더 좋습니다
+                """)
 
 if __name__ == "__main__":
     main()

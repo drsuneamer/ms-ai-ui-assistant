@@ -327,9 +327,9 @@ def main():
         with tab2:
             st.write("다양한 형태로 입력 가능합니다:")
             st.info("""
-            • **JSON**: {"ui_requirements": [...], "user_feedback": [...]}
-            • **마크다운**: ## 요구사항, ### UI 개선사항
-            • **일반 텍스트**: 자유로운 형태의 요구사항 설명
+            • **JSON**: {"ui_requirements": [...], "user_feedback": [...]}\n
+            • **마크다운**: ## 요구사항, ### UI 개선사항\n
+            • **일반 텍스트**: 자유로운 형태의 요구사항 설명\n
             """)
             
             requirements_text = st.text_area(
@@ -337,7 +337,7 @@ def main():
                 value=st.session_state.requirements_input,
                 height=300,
                 placeholder="""예시:
-                
+
 JSON 형태:
 {"ui_requirements": [{"category": "버튼", "improvement_request": "더 큰 버튼 필요"}]}
 
@@ -350,6 +350,16 @@ JSON 형태:
 버튼이 너무 작아서 클릭하기 어렵습니다. 좀 더 크게 만들어주세요.""",
                 key="requirements_text_input"
             )
+            
+            # 요구사항 입력 완료 버튼 (tab2용)
+            if st.button("📝 요구사항 입력 완료", 
+                        type="secondary", 
+                        use_container_width=True,
+                        key="requirements_tab2_complete_btn"):
+                st.session_state.requirements_input = requirements_text
+                st.session_state["requirements_tab2_ready"] = True
+                st.rerun()
+
             
             # 입력 내용이 변경되면 세션 상태 업데이트
             if requirements_text != st.session_state.requirements_input:
@@ -388,40 +398,86 @@ JSON 형태:
         current_code = ""
         if uploaded_code_file is not None:
             current_code = uploaded_code_file.read().decode("utf-8")
+            # 파일 업로드 시 자동으로 저장 및 완료 상태 설정
+            st.session_state["saved_code"] = current_code
+            st.session_state["code_input_ready"] = True
             # 언어 자동 감지
             if code_language == "auto-detect":
                 detected_lang = detect_code_language(current_code)
                 st.info(f"🔍 감지된 언어: {detected_lang.upper()}")
                 code_language = detected_lang
+            st.text_area("업로드된 코드 미리보기:", current_code, height=200, disabled=True, key="uploaded_code_preview")
         else:
-            current_code = st.text_area(
-                "또는 직접 코드를 입력하세요:",
-                height=300,
-                placeholder="개선하고 싶은 HTML, React, JavaScript 등의 코드를 입력하세요."
-            )
-            
-        # 언어 자동 감지 (직접 입력된 코드에 대해)
+            # 저장된 코드가 있으면 표시
+            if st.session_state.get("saved_code", "") and st.session_state.get("code_input_ready", False):
+                current_code = st.session_state["saved_code"]
+                st.text_area("입력 완료된 코드:", current_code, height=200, disabled=True, key="saved_code_display")
+                st.success("✅ 코드 입력이 완료되었습니다!")
+                
+                # 코드 재입력 버튼
+                if st.button("🔄 코드 다시 입력", type="secondary", use_container_width=True, key="code_re_input_btn"):
+                    st.session_state["saved_code"] = ""
+                    st.session_state["code_input_ready"] = False
+                    st.rerun()
+            else:
+                # 새로 입력
+                current_code = st.text_area(
+                    "코드를 직접 입력하세요:",
+                    height=300,
+                    placeholder="개선하고 싶은 HTML, React, JavaScript 등의 코드를 입력하세요.",
+                    key="current_code_input"
+                )
+                
+                # 코드 입력 완료 버튼
+                if st.button("📝 코드 입력 완료", 
+                            type="secondary", 
+                            use_container_width=True,
+                            key="code_input_complete_btn"):
+                    st.session_state["saved_code"] = current_code  # 코드를 세션에 저장
+                    st.session_state["code_input_ready"] = True
+                    st.rerun()
+                    
+                    
+                    
+        # 언어 자동 감지
         if code_language == "auto-detect" and current_code.strip():
-            detected_lang = detect_code_language(current_code)
-            st.info(f"🔍 감지된 언어: {detected_lang.upper()}")
-            code_language = detected_lang
+            if st.session_state.get("code_input_ready", False):
+                detected_lang = detect_code_language(current_code)
+                st.info(f"🔍 감지된 언어: {detected_lang.upper()}")
+                code_language = detected_lang
     
     with col2:
         st.subheader("🎯 개선 결과")
         
         # 입력 상태 체크
-        has_requirements = requirements.strip() != ""
-        has_code = current_code.strip() != ""
+        requirements_ready = (uploaded_req_file is not None) or st.session_state.get("requirements_tab2_ready", False)
+        code_ready = st.session_state.get("code_input_ready", False)
         
-        if has_requirements and has_code:
-            st.success("✅ 입력 완료! 개선을 시작할 수 있습니다.")
-        elif not has_requirements:
-            st.warning("⚠️ 요구사항을 입력해주세요.")
-        elif not has_code:
-            st.warning("⚠️ 현재 코드를 입력해주세요.")
+        # 실제 데이터 체크
+        has_requirements = requirements.strip() != ""
+        has_code = st.session_state.get("saved_code", "").strip() != ""
+        
+        # 현재 코드 변수 업데이트
+        if has_code:
+            current_code = st.session_state["saved_code"]
+        
+        # 상태별 안내 메시지
+        if requirements_ready and code_ready and has_requirements and has_code:
+            st.success("✅ 요구사항과 코드 입력이 모두 완료되었습니다! 개선을 시작할 수 있습니다.")
+        elif not requirements_ready or not has_requirements:
+            if code_ready and has_code:
+                st.info("✅ 코드 입력 완료! 이제 요구사항을 입력하고 '입력 완료' 버튼을 눌러주세요.")
+            else:
+                st.warning("⚠️ 요구사항과 코드를 모두 입력하고 각각 '입력 완료' 버튼을 눌러주세요.")
+        elif not code_ready or not has_code:
+            if requirements_ready and has_requirements:
+                st.info("✅ 요구사항 입력 완료! 이제 코드를 입력하고 '입력 완료' 버튼을 눌러주세요.")
+            else:
+                st.warning("⚠️ 현재 코드를 입력하고 '입력 완료' 버튼을 눌러주세요.")
+
         
         # 기존 코드 화면 미리보기 (HTML만 지원 안내)
-        if current_code.strip():
+        if current_code.strip() and code_ready:
             st.markdown("#### 🖥️ 기존 코드 화면 미리보기")
             if code_language == "html":
                 try:
@@ -436,7 +492,8 @@ JSON 형태:
         if st.button("🚀 코드 개선 시작", 
                     type="primary", 
                     use_container_width=True,
-                    disabled=not (has_requirements and has_code)):
+                    disabled=not (requirements_ready and code_ready and has_requirements and has_code),
+                    key="improvement_start_btn"):
             
             with st.spinner("🤖 AI가 코드를 개선하는 중입니다..."):
                 import datetime
@@ -445,6 +502,7 @@ JSON 형태:
                     llm, requirements, current_code, code_language, focus_area
                 )
                 st.session_state["improvement_result"] = result
+
         
         st.divider()
         
