@@ -108,9 +108,10 @@ streamlit run Home.py
 - 사용자 피드백별 해결책을 제안한다.
 - 분석 결과를 json, markdown 파일로 다운로드 가능하다.
 - 정해진 시스템 프롬프트가 있지만, 사용자가 직접 화면에서 프롬프트 수정도 가능하다.
-- 
-![ezgif-31fbc4bef0f64a](https://github.com/user-attachments/assets/770b48cc-593c-4e05-8fc0-81ef00576960)
-![ezgif-3a42f04a8cdc9e](https://github.com/user-attachments/assets/0063fdd8-3e6a-4cb1-897e-788e9778bd7c)
+
+  
+![ezgif-1b33ad3f72b925](https://github.com/user-attachments/assets/0413d11d-fe6e-482d-9f8a-51347d82f556)
+![ezgif-1a88439846a227](https://github.com/user-attachments/assets/319b2610-1624-48da-b17e-15a17b53f974)
 
 
 
@@ -119,7 +120,8 @@ streamlit run Home.py
 - 요구사항이 담긴 파일을 입력하고, 기존 프론트엔드 코드를 입력하면 개선 결과 코드를 받을 수 있다.
 - HTML 코드인 경우에는 화면에서 미리보기도 가능하다.
   
-![ezgif-33b5ecbf08619f](https://github.com/user-attachments/assets/906d1794-6cbf-4432-ac95-4c3eb735dd81)
+![ezgif-1d39768cc46cab](https://github.com/user-attachments/assets/3c553832-0e7c-4801-8d05-1d78d3908308)
+
 
 
 #### 4. 💡 AI에게 질문하기
@@ -137,7 +139,8 @@ streamlit run Home.py
 
 - WAV 파일을 업로드하면 내용을 인식하여 회의 내용을 요약해준다.
 
-![ezgif-5a264bbdff2387](https://github.com/user-attachments/assets/c46cb22c-5375-47d8-a252-f38f7396e6e0)
+![ezgif-167d9aabeaa9d7](https://github.com/user-attachments/assets/72573122-e58b-436e-8efe-d20892c30516)
+
 
 
 #### 6. ⚠️ 관리자 기능 - 모니터링 상태 확인
@@ -145,7 +148,8 @@ streamlit run Home.py
 - 특정 링크로 들어가서 .streamlit/secrets.toml로 설정한 비밀번호를 맞게 입력하면 langfuse 사이트로 연결되는 관리자 페이지 접속이 가능하다.
 - langfuse와의 연결 상태도 확인 가능하다.
 
-![ezgif-5a264bbdff2387](https://github.com/user-attachments/assets/77a5a8f1-c157-4fe0-8564-767aea214c38)
+![ezgif-17fee65a8cd4b4](https://github.com/user-attachments/assets/5d74b869-4484-436f-9ecf-701955741741)
+
 
 ---
 
