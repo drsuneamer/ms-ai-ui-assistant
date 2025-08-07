@@ -274,6 +274,17 @@ with col1:
     - Azure AI Search 인덱스 기반 가이드라인을 참고하여 답변합니다.
     - 웹 검색도 활용합니다.
     """)
+    
+    # 질문 입력 완료 버튼 추가
+    question_ready = st.button("📝 질문 입력 완료", 
+                              type="secondary", 
+                              use_container_width=True,
+                              key="question_complete_btn")
+    if question_ready:
+        st.session_state["question_input_ready"] = True
+        st.rerun()
+    
+    
     st.divider()
     uploaded_file = st.file_uploader("회의록 파일 업로드 (txt, md)", type=["txt", "md"])
     meeting_content = ""
@@ -286,6 +297,15 @@ with col1:
             height=200,
             placeholder="회의에서 논의된 UI/UX 개선사항을 입력해주세요..."
         )
+        
+    # 회의록 입력 완료 버튼 추가
+    meeting_ready = st.button("📝 회의록 입력 완료", 
+                                type="secondary", 
+                                use_container_width=True,
+                                key="meeting_complete_btn")
+    if meeting_ready:
+        st.session_state["meeting_input_ready"] = True
+        st.rerun()
 
 with col2:
     # 질문 또는 회의록이 있을 때만 버튼 활성화

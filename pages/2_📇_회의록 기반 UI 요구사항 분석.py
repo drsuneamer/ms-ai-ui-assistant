@@ -220,20 +220,28 @@ def main():
         
         content = ""
         if uploaded_file is not None:
-            # 파일 읽기
             content = uploaded_file.read().decode("utf-8")
             st.text_area("파일 내용 미리보기:", content, height=300, disabled=True)
         else:
-            # 직접 입력 옵션
             st.markdown("또는 직접 입력:")
             content = st.text_area("회의록 내용을 직접 입력하세요:", height=300, 
-                                 placeholder="회의 내용을 입력해주세요.")
+                                 placeholder="회의 내용을 입력해주세요.", key="meeting_input")
+            
+        # 입력 완료 버튼
+        if st.button("📝 입력 완료", 
+                    type="secondary", 
+                    use_container_width=True):
+            st.session_state["input_ready"] = True
+            st.rerun()
     
     with col2:
         st.subheader("🤖 AI 분석 결과")
         
+        # 입력이 준비되었거나 파일이 업로드된 경우
+        is_ready = (uploaded_file is not None) or st.session_state.get("input_ready", False)
+        
         # 분석 결과를 세션 상태에 저장
-        if content.strip():
+        if is_ready and content.strip():
             if st.button("🚀 요구사항 분석 시작", type="primary", use_container_width=True):
                 with st.spinner("🤖 AI가 회의록을 분석 중입니다..."):
                     system_prompt = custom_prompt if 'custom_prompt' in locals() else SYSTEM_PROMPT
@@ -263,7 +271,7 @@ def main():
             else:
                 st.error(f"❌ 분석 중 오류가 발생했습니다: {result['error']}")
         else:
-            st.info("👆 회의록을 업로드하거나 직접 입력해주세요.")
+            st.info("👆 회의록을 업로드하거나 직접 입력 후 '입력 완료' 버튼을 눌러주세요.")
 
 if __name__ == "__main__":
     main()
