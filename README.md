@@ -149,6 +149,7 @@ streamlit run Home.py
 - langfuse와의 연결 상태도 확인 가능하다.
 
 ![ezgif-17fee65a8cd4b4](https://github.com/user-attachments/assets/5d74b869-4484-436f-9ecf-701955741741)
+<img width="1671" height="680" alt="image" src="https://github.com/user-attachments/assets/7037981f-fc54-407e-81fe-c82745ee266f" />
 
 
 ---
