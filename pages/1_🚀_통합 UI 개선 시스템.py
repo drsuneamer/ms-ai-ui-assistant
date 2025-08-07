@@ -428,11 +428,11 @@ def main():
         # 프로세스 가이드
         st.subheader("📋 진행 단계")
         st.markdown("""
-        **1단계:** 회의록 업로드/입력
-        **2단계:** AI 요구사항 분석
-        **3단계:** 현재 코드 입력
-        **4단계:** 코드 개선 실행
-        **5단계:** 결과 확인 및 다운로드
+        **1단계:** 회의록 업로드/입력\n
+        **2단계:** AI 요구사항 분석\n
+        **3단계:** 현재 코드 입력\n
+        **4단계:** 코드 개선 실행\n
+        **5단계:** 결과 확인 및 다운로드\n
         """)
         
         st.info("💡 각 단계를 순서대로 진행해주세요!")
@@ -463,7 +463,8 @@ def main():
                 )
                 
                 if uploaded_meeting_file is not None:
-                    if uploaded_meeting_file.type == "text/plain":
+                    filename = uploaded_meeting_file.name.lower()
+                    if filename.endswith(".txt") or filename.endswith(".md"):
                         meeting_content = str(uploaded_meeting_file.read(), "utf-8")
                         st.success("✅ 파일이 업로드되었습니다.")
                         
@@ -484,30 +485,6 @@ def main():
                 - 샘플링 레이트: 16kHz 또는 48kHz
                 - 채널: 모노(1채널) 권장
                 """)
-                
-                # WAV 변환 가이드 제공
-                with st.expander("🔄 다른 형식 → WAV 변환 방법"):
-                    st.markdown("""
-                    **MP3/M4A → WAV 변환 방법:**
-                    
-                    **1️⃣ 온라인 변환기 (쉬움)**
-                    - [Online Audio Converter](https://online-audio-converter.com/)
-                    - [Convertio](https://convertio.co/mp3-wav/)
-                    
-                    **2️⃣ FFmpeg (고급)**
-                    ```bash
-                    # 기본 변환
-                    ffmpeg -i input.mp3 output.wav
-                    
-                    # Azure Speech 최적화
-                    ffmpeg -i input.mp3 -acodec pcm_s16le -ar 16000 -ac 1 output.wav
-                    ```
-                    
-                    **3️⃣ 오디오 편집 프로그램**
-                    - Audacity (무료)
-                    - Adobe Audition
-                    - 윈도우 내장 음성 녹음기
-                    """)
                 
                 uploaded_audio_file = st.file_uploader(
                     "WAV 회의 녹음 파일을 업로드하세요:",

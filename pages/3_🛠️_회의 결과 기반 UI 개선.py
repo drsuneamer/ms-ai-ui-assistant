@@ -262,7 +262,6 @@ def main():
         **요구사항 입력:**
         - 📄 **파일 업로드**: JSON, MD, TXT
         - 📝 **직접 입력**: 자유 형태
-        - 🔗 **분석결과**: 이전 분석 가져오기
         
         **코드 입력:**
         - 📁 **파일 업로드**: 모든 코드 파일
@@ -286,7 +285,7 @@ def main():
             st.session_state.requirements_input = ""
         
         # 탭으로 입력 방식 선택
-        tab1, tab2, tab3 = st.tabs(["📄 파일 업로드", "📝 직접 입력", "🔗 분석결과 가져오기"])
+        tab1, tab2 = st.tabs(["📄 파일 업로드", "📝 직접 입력"])
         
         with tab1:
             uploaded_req_file = st.file_uploader(
@@ -354,21 +353,7 @@ JSON 형태:
             if requirements_text.strip():
                 parsed_req, req_format = parse_requirements(requirements_text)
                 st.success(f"✅ {req_format.upper()} 형태로 인식되었습니다.")
-        
-        with tab3:
-            if st.button("📋 분석 페이지 결과 가져오기", use_container_width=True):
-                if "analysis_result" in st.session_state:
-                    st.session_state.requirements_input = st.session_state["analysis_result"]["raw"]
-                    st.success("✅ 분석 결과를 가져왔습니다!")
-                    st.rerun()  # 페이지 새로고침으로 상태 반영
-                else:
-                    st.warning("⚠️ 분석 페이지에서 먼저 회의록을 분석해주세요.")
-            
-            # 가져온 결과가 있으면 미리보기
-            if st.session_state.requirements_input:
-                with st.expander("📄 현재 요구사항 미리보기"):
-                    st.text_area("내용", st.session_state.requirements_input, height=200, disabled=True, key="analysis_preview_text_area")
-        
+
         # 최종 요구사항 값 설정
         requirements = st.session_state.requirements_input
         

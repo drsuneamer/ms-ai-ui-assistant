@@ -164,7 +164,7 @@ def main():
     
     st.set_page_config(
         page_title="회의록 요구사항 분석기",
-        page_icon="📋",
+        page_icon="📇",
         layout="wide"
     )
     
@@ -233,7 +233,7 @@ def main():
                 with st.expander("📄 파일 내용 미리보기"):
                     st.text_area("내용", content, height=200, disabled=True, key="file_preview")
         
-        elif input_method == "🎤 WAV 음성 파일 업로드":
+        elif input_method == "🎤 음성 파일 업로드":
             # WAV 음성 파일 업로드 전용
             st.info("""
             🎵 **WAV 음성 파일 전용 서비스**

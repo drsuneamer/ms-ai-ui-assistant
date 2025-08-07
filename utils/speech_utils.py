@@ -99,15 +99,6 @@ def validate_wav_file_only(file_data, file_name):
                 frames = wav_file.getnframes()
                 duration = frames / frame_rate
                 
-                # Azure Speech Service 호환성 정보 표시
-                st.success(f"""
-                **✅ WAV 파일 분석 결과:**
-                - 채널: {channels}개 {'✅' if channels <= 2 else '⚠️ (1-2채널 권장)'}
-                - 비트 깊이: {sample_width * 8}bit {'✅' if sample_width == 2 else '⚠️ (16-bit 권장)'}
-                - 샘플링 레이트: {frame_rate:,}Hz {'✅' if 8000 <= frame_rate <= 48000 else '⚠️ (8-48kHz 권장)'}
-                - 재생 시간: {duration:.1f}초
-                - 파일 크기: {len(file_data) / (1024 * 1024):.2f} MB
-                """)
                 
                 # Azure Speech Service 최적화 권장사항
                 optimization_warnings = []

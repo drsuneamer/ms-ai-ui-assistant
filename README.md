@@ -1,6 +1,13 @@
 # MS-PJT
 
-> 25-08-05 (화)
+### 프로젝트 정보
+
+프로젝트 릴리즈 주소: sahara-web-001.azurewebsites.net (expired in 25-08-08)
+
+---
+
+
+### 개발환경 세팅
 
 venv 생성
 ```bash
@@ -27,4 +34,12 @@ requirements.txt 기반 설치
 pip install -r requirements.txt
 ```
 
-Streamlit 메인 페이지 생성 (Home.py)
+streamlit 메인 페이지 실행
+```bash
+streamlit run Home.py
+```
+
+---
+
+### 프로젝트 구조
+

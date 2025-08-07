@@ -321,7 +321,10 @@ with col2:
                     st.session_state.tool_tracker.reset()
                     
                     if meeting_content.strip() and not user_question.strip():
-                        advice_prompt = f"다음 회의록을 바탕으로 UI/UX 개선 조언을 해주세요:\n\n{meeting_content}"
+                        advice_prompt = f"""
+                        다음 회의록을 바탕으로 UI/UX 개선 조언을 해주세요:\n\n{meeting_content}
+                        회의 내용을 전체적으로 파악해서 다양한 관점에서의 개선을 제시하세요.
+                        """
                         # AgentExecutor의 invoke 메서드 사용 (콜백 포함)
                         result = agent_executor.invoke(
                             {"input": advice_prompt},
