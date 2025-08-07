@@ -39,15 +39,7 @@ def validate_and_prepare_wav_audio(file_data, file_name):
                 frame_rate = wav_file.getframerate()
                 frames = wav_file.getnframes()
                 duration = frames / frame_rate
-                
-                st.success(f"""
-                **✅ WAV 파일 정보:**
-                - 채널: {channels}개 {'✅' if channels <= 2 else '⚠️'}
-                - 비트 깊이: {sample_width * 8}bit {'✅' if sample_width == 2 else '⚠️'}
-                - 샘플링 레이트: {frame_rate:,}Hz {'✅' if 8000 <= frame_rate <= 48000 else '⚠️'}
-                - 길이: {duration:.1f}초
-                """)
-                
+
                 # Azure Speech SDK 호환성 경고
                 warnings = []
                 if channels > 2:

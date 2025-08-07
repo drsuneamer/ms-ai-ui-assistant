@@ -214,7 +214,7 @@ def main():
         # 입력 방식 선택
         input_method = st.radio(
             "입력 방식 선택:",
-            ["📁 텍스트 파일 업로드", "🎤 WAV 음성 파일 업로드", "📝 직접 입력"]
+            ["📁 텍스트 파일 업로드", "🎤 음성 파일 업로드", "📝 직접 입력"]
         )
         
         content = ""
@@ -265,12 +265,12 @@ def main():
                 st.audio(uploaded_audio_file.getvalue())
                 
                 # WAV 음성을 텍스트로 변환
-                if st.button("🎯 WAV 음성을 텍스트로 변환", type="secondary", use_container_width=True):
+                if st.button("🎯 음성을 텍스트로 변환", type="secondary", use_container_width=True):
                     # Azure Speech Service 초기화
                     speech_config = init_speech_config()
                     
                     if speech_config:
-                        with st.spinner("🎯 WAV 음성을 텍스트로 변환 중입니다..."):
+                        with st.spinner("🎯 음성을 텍스트로 변환 중입니다..."):
                             # WAV 파일 검증 및 준비
                             tmp_file_path, is_valid = validate_wav_file_only(
                                 uploaded_audio_file.getvalue(), 
@@ -392,7 +392,7 @@ def main():
         # 입력이 준비되었는지 확인
         is_ready = (
             (input_method == "📁 텍스트 파일 업로드" and content.strip()) or
-            (input_method == "🎤 WAV 음성 파일 업로드" and st.session_state.get("audio_input_ready", False)) or
+            (input_method == "🎤 음성 파일 업로드" and st.session_state.get("audio_input_ready", False)) or
             (input_method == "📝 직접 입력" and st.session_state.get("direct_input_ready", False))
         )
         
@@ -445,14 +445,12 @@ def main():
                 - UTF-8 인코딩을 권장합니다
                 - 파일 크기는 10MB 이하를 권장합니다
                 """)
-            elif input_method == "🎤 WAV 음성 파일 업로드":
+            elif input_method == "🎤 음성 파일 업로드":
                 st.markdown("""
                 **🎵 WAV 음성 파일 팁:**
                 - WAV 형식만 지원됩니다
-                - 16-bit PCM, 16kHz, 모노 채널 권장
                 - 배경 소음이 적은 깨끗한 녹음 사용
                 - 파일 크기는 100MB 이하로 제한
-                - Azure Speech Service 최적화됨
                 """)
             else:
                 st.markdown("""

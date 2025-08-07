@@ -224,12 +224,12 @@ def create_improvement_report(data, code_language):
 def main():
     st.set_page_config(
         page_title="코드 개선 도우미",
-        page_icon="🚀",
+        page_icon="🛠️",
         layout="wide"
     )
     
-    st.title("🚀 회의록 기반 코드 개선 도우미")
-    st.markdown("회의에서 도출된 요구사항을 바탕으로 기존 코드를 개선해드립니다.")
+    st.title("🛠️ 회의 결과 기반 UI 코드 개선 도우미")
+    st.markdown("회의에서 도출된 요구사항을 바탕으로 UI 코드를 개선해드립니다. 직접 요구사항을 입력하는 것도 당연히 가능합니다!")
     
     # LangChain 클라이언트 초기화
     llm = init_langchain_client(llm_name, 0.1)  # 약간의 창의성 허용
@@ -535,8 +535,6 @@ JSON 형태:
                         )
             else:
                 st.error(f"❌ 개선 중 오류 발생: {result['error']}")
-        else:
-            st.info("👆 요구사항과 현재 코드를 입력한 후 '코드 개선 시작' 버튼을 눌러주세요.")
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UI Test Mock Page</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #fffaf5;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background-color: #ffb74d;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    nav {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .login-btn {
+      background: transparent;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .cta {
+      display: block;
+      margin: 2rem auto;
+      padding: 1rem 2rem;
+      background-color: #ff8a65;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      min-width: 48px;
+      min-height: 48px;
+    }
+
+    .banner {
+      background-color: #eeeeee;
+      padding: 2rem;
+      margin: 1rem;
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    main {
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: block;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+
+    .modal-overlay.active {
+      display: block;
+    }
+
+    footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      padding: 0.5rem;
+      background-color: #ffcc80;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    input[type="text"] {
+      padding: 0.5rem;
+      flex: 1;
+    }
+
+    button {
+      min-width: 48px;
+      min-height: 48px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">AppLogo</div>
+    <nav>
+      <button class="login-btn">Login</button>
+      <button class="login-btn">&#9776;</button> <!-- hamburger -->
+    </nav>
+  </header>
+
+  <div class="banner">
+    <p>This is a promotional banner. Limited time offer!</p>
+    <img src="promo.png" alt="Promotional Banner Image" width="200" />
+  </div>
+
+  <main>
+    <h1>Welcome to Our Service</h1>
+    <p>Find what you need, fast and easily.</p>
+    <button class="cta">Get Started</button>
+  </main>
+
+  <button onclick="openModal()" class="cta" style="margin-bottom: 5rem;">Open Feedback Modal</button>
+
+  <div class="modal-overlay" id="overlay" onclick="closeModal()"></div>
+  <div class="modal" id="modal">
+    <p>This is a feedback modal window.</p>
+    <button onclick="closeModal()">Close</button>
+  </div>
+
+  <footer>
+    <input type="text" placeholder="Type your message..." />
+    <button>Send</button>
+  </footer>
+
+  <script>
+    function openModal() {
+      document.getElementById('modal').classList.add('active');
+      document.getElementById('overlay').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+      document.getElementById('overlay').classList.remove('active');
+    }
+  </script>
+
+</body>
+</html>

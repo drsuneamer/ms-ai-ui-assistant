@@ -1,15 +1,15 @@
+import os
+import streamlit as st
 from dotenv import load_dotenv
 from langchain_openai import AzureChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_community.retrievers import AzureAISearchRetriever
-from langchain_community.tools import TavilySearchResults
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
-from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.tools import tool
 from langchain_core.callbacks import BaseCallbackHandler
-import os
-import streamlit as st
+from langchain_community.retrievers import AzureAISearchRetriever
+from langchain_community.tools import TavilySearchResults
+from langchain.agents import AgentExecutor, create_tool_calling_agent
 
 # 환경변수 로드
 load_dotenv()
@@ -21,7 +21,7 @@ st.set_page_config(
 )
 
 st.title("💡 고민이 될 때 AI에게 질문하기")
-st.markdown("UI/UX, 마이크로카피, 기타 사례 등 궁금한 점을 AI에게 자유롭게 질문하거나, 회의록을 입력해 조언을 받아보세요.")
+st.markdown("UI/UX, 마이크로카피, 관련 사례 등 궁금한 점을 AI에게 자유롭게 질문하거나, 회의록을 입력해 조언을 받아보세요.")
 
 col1, col2 = st.columns([1, 1])
 
@@ -29,7 +29,7 @@ llm_gpt4 = os.getenv("AZURE_OPENAI_LLM_GPT4")   # Agent를 위한 gpt-4 모델 �
 llm_mini = os.getenv("AZURE_OPENAI_LLM_MINI")
 search_index_name = os.getenv("AZURE_AI_SEARCH_INDEX_NAME") # rag-uiux
 
-# Tool 사용을 추적하는 콜백 클래스
+# Tool 사용을 추적하는 콜백 클래스 (agent가 어떤 tool을 사용했는지 확인)
 class ToolTracker(BaseCallbackHandler):
     def __init__(self):
         self.used_tools = []
@@ -49,8 +49,8 @@ if 'tool_tracker' not in st.session_state:
 def format_docs(docs):
     return "\n\n".join([doc.page_content for doc in docs])
 
-@tool   # tool임을 명시
-def help_uiux(query: str) -> str: # 들어오고 나가는 형식 str로 지정
+@tool
+def help_uiux(query: str) -> str:   # Azure AI Search의 인덱스를 통해 UI/UX 관련 질문에 답변하는 기능
     """
     AI에게 UI/UX 관련 질문을 던져 답변을 받는 기능입니다.
     """
