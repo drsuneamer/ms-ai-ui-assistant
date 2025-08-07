@@ -7,7 +7,7 @@ from langchain.schema import HumanMessage, SystemMessage
 import tempfile
 import wave
 import io
-from speech_utils import init_speech_config, speech_to_text_safe
+from utils.speech_utils import init_speech_config, speech_to_text_safe
 
 
 # 환경변수 로드

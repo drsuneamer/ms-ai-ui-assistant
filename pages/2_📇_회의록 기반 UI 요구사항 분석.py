@@ -5,7 +5,10 @@ from langchain_openai import AzureChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
 import json
 import tempfile
-from speech_utils import init_speech_config, speech_to_text_safe
+from utils.speech_utils import init_speech_config, speech_to_text_safe
+from utils.langchain_utils import init_langchain_client
+from utils.langfuse_monitor import langfuse_monitor, log_user_action, log_generation
+
 
 # 사용자의 회의록을 분석하여 UI/UX 개선 요구사항을 도출하는 기능 제공 페이지
 # txt, md 파일 업로드, 음성 파일 업로드 또는 직접 입력 가능
@@ -16,21 +19,6 @@ from speech_utils import init_speech_config, speech_to_text_safe
 load_dotenv()
 llm_name = os.getenv("AZURE_OPENAI_LLM_MINI")
 
-# LangChain Azure OpenAI 클라이언트 설정
-@st.cache_resource
-def init_langchain_client():
-    try:
-        llm = AzureChatOpenAI(
-            azure_deployment=llm_name,
-            api_version=os.getenv("OPENAI_API_VERSION"),
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            api_key=os.getenv("OPENAI_API_KEY"),
-            temperature=0.0  # 창의성 최소화
-        )
-        return llm
-    except Exception as e:
-        st.error(f"LangChain Azure OpenAI 연결 실패: {str(e)}")
-        return None
 
 # 시스템 프롬프트 정의 (기존과 동일)
 SYSTEM_PROMPT = """
@@ -72,16 +60,19 @@ SYSTEM_PROMPT = """
 - 개발 복잡도와 사용자 임팩트 고려
 """
 
+@langfuse_monitor(name="회의록_분석")  
 def analyze_meeting_content(llm, content):
     """회의록 내용을 LangChain LLM으로 분석"""
     try:
+        # 추가 로깅 제거! @observe가 모든 걸 자동으로 처리
+        
         # LangChain 메시지 구성
         messages = [
             SystemMessage(content=SYSTEM_PROMPT),
             HumanMessage(content=f"다음 회의록을 분석해주세요:\n\n{content}")
         ]
         
-        # LLM 호출
+        # LLM 호출 - 입력/출력이 자동으로 Langfuse에 기록됨
         response = llm.invoke(messages)
         
         # JSON 파싱 시도
@@ -89,7 +80,6 @@ def analyze_meeting_content(llm, content):
             analysis_result = json.loads(response.content)
             return {"success": True, "data": analysis_result, "raw": response.content}
         except json.JSONDecodeError:
-            # JSON 파싱 실패 시 raw text 반환
             return {"success": True, "data": None, "raw": response.content}
             
     except Exception as e:
@@ -169,6 +159,9 @@ def result_to_markdown(data):
 
 # 메인 앱
 def main():
+    st.session_state["current_page"] = "ui_requirements_analysis"
+
+    
     st.set_page_config(
         page_title="회의록 요구사항 분석기",
         page_icon="📋",
@@ -178,8 +171,11 @@ def main():
     st.title("📋 회의록 UI 요구사항 분석기")
     st.markdown("회의 전문을 업로드하거나 음성으로 입력하면 AI가 UI/UX 개선 요구사항을 분석해드립니다.")
     
+    # 초기 사용자 액션 로깅
+    log_user_action("page_loaded", {"page": "ui_requirements_analysis"})
+    
     # LangChain 클라이언트 초기화
-    llm = init_langchain_client()
+    llm = init_langchain_client(llm_name, 0.0)  # 창의력 최소화
     if not llm:
         st.error("❌ LangChain Azure OpenAI 연결에 실패했습니다. 환경변수를 확인해주세요.")
         st.code("""

@@ -7,8 +7,8 @@ import json
 import re
 import datetime
 import tempfile
-from speech_utils import init_speech_config, speech_to_text_safe
-from langchain_utils import init_langchain_client
+from utils.speech_utils import init_speech_config, speech_to_text_safe
+from utils.langchain_utils import init_langchain_client
 
 
 # 회의록에서 도출된 요구사항과 현재 코드를 입력받아 개선된 코드를 제공하는 페이지
