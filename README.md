@@ -97,6 +97,11 @@ streamlit run Home.py
 
 ### 🐾 세부 기능
 
+#### 0. 메인 페이지 - 기능 소개
+
+<img width="800" height="1081" alt="image" src="https://github.com/user-attachments/assets/f50c62ff-f784-4802-a82f-7a4c6d2ffeb4" />
+
+
 #### 1. 🚀 통합 UI 개선 시스템
 
 - 텍스트, 음성(wav) 등 다양한 형태로 입력되는 회의록에 등장한 UI 개선 내용을 요약한다.
@@ -104,6 +109,8 @@ streamlit run Home.py
 - HTML 코드를 개선하는 경우에는 화면에서 바로 전후 비교가 가능하다.
 - 요약부터 전체 코드까지 정리된 보고서 파일(markdown) 다운로드가 가능하다.
 - 전체 개선, 사용자 경험, 접근성, 반응형 디자인 등 개선 집중 영역을 선택할 수 있다.
+
+<img width="800" height="1003" alt="image" src="https://github.com/user-attachments/assets/393134cf-c4a7-4678-b376-8c3ae3cc2fc2" />
 
 ![ezgif-8bd73ba992a59a](https://github.com/user-attachments/assets/8b84723c-6036-4102-9582-5ef5a904bf30)
 ![ezgif-18b42cb0146202](https://github.com/user-attachments/assets/3a960d64-b1d4-4333-a9c6-54bbcf040e76)
@@ -117,7 +124,8 @@ streamlit run Home.py
 - 분석 결과를 json, markdown 파일로 다운로드 가능하다.
 - 정해진 시스템 프롬프트가 있지만, 사용자가 직접 화면에서 프롬프트 수정도 가능하다.
 
-  
+<img width="800" height="1125" alt="image" src="https://github.com/user-attachments/assets/43c492dc-a5a3-4598-a012-19f0b5a99d01" />
+
 ![ezgif-1b33ad3f72b925](https://github.com/user-attachments/assets/0413d11d-fe6e-482d-9f8a-51347d82f556)
 ![ezgif-1a88439846a227](https://github.com/user-attachments/assets/319b2610-1624-48da-b17e-15a17b53f974)
 
@@ -128,7 +136,8 @@ streamlit run Home.py
 - 요구사항이 담긴 파일을 입력하고, 기존 프론트엔드 코드를 입력하면 개선 결과 코드를 받을 수 있다.
 - HTML 코드인 경우에는 화면에서 미리보기도 가능하다.
 
-<img width="1511" height="790" alt="image" src="https://github.com/user-attachments/assets/f8809111-6253-42c1-9e81-bd43448c7927" />
+<img width="800" height="790" alt="image" src="https://github.com/user-attachments/assets/f8809111-6253-42c1-9e81-bd43448c7927" />
+<img width="800" height="1125" alt="image" src="https://github.com/user-attachments/assets/9f5389f2-e2b2-4327-9450-c66c3c40d78e" />
 
 ![ezgif-1d39768cc46cab](https://github.com/user-attachments/assets/3c553832-0e7c-4801-8d05-1d78d3908308)
 
@@ -140,8 +149,9 @@ streamlit run Home.py
 - UI/UX 관련 질문의 경우에는, Azure AI Search로 사전에 정의된 검색 인덱스를 참조하도록 한다. 이때 Azure Blob Storage를 통해 보편적인 UI 관련 가이드 문서를 indexing에 사용했다.
 - 핵심 문구 등 마이크로카피 관련 질문에는 prompt를 통해 마이크로카피 작성 가이드라인을 제시하여 적합한 답변을 낼 수 있도록 설정했다.
 
-![ezgif-36666b510d4821](https://github.com/user-attachments/assets/e4c6cd97-9403-41d1-a20a-1b9c5a5e7087)
+<img width="800" height="917" alt="image" src="https://github.com/user-attachments/assets/548855d6-2ea0-4bf5-a97a-df085106f12e" />
 
+![ezgif-36666b510d4821](https://github.com/user-attachments/assets/e4c6cd97-9403-41d1-a20a-1b9c5a5e7087)
 ![ezgif-3dd52fc8619793](https://github.com/user-attachments/assets/a89f47f6-20b1-4a94-8da0-e12d6ec4989e)
 
 
@@ -159,7 +169,7 @@ streamlit run Home.py
 - langfuse와의 연결 상태도 확인 가능하다.
 
 ![ezgif-17fee65a8cd4b4](https://github.com/user-attachments/assets/5d74b869-4484-436f-9ecf-701955741741)
-<img width="1671" height="680" alt="image" src="https://github.com/user-attachments/assets/7037981f-fc54-407e-81fe-c82745ee266f" />
+<img width="800" height="680" alt="image" src="https://github.com/user-attachments/assets/7037981f-fc54-407e-81fe-c82745ee266f" />
 
 
 ---
