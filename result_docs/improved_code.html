@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>음식점 추천 앱</title>
+  <style>
+    /* Reset and base styles */
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+        Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background-color: #1f1f1f;
+      padding: 0.5rem 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.7);
+    }
+    nav {
+      display: flex;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: #555 transparent;
+    }
+    nav::-webkit-scrollbar {
+      height: 6px;
+    }
+    nav::-webkit-scrollbar-thumb {
+      background-color: #555;
+      border-radius: 3px;
+    }
+    .category-button {
+      flex: 0 0 auto;
+      margin: 0.25rem 0.5rem;
+      padding: 0.5rem 1rem;
+      background-color: #2a2a2a;
+      border: none;
+      border-radius: 20px;
+      color: #e0e0e0;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    .category-button:focus {
+      outline: 2px solid #90caf9;
+      outline-offset: 2px;
+    }
+    .category-button[aria-pressed="true"] {
+      background-color: #90caf9;
+      color: #121212;
+    }
+    main {
+      flex: 1 0 auto;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+    .restaurant-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .restaurant-card {
+      background-color: #1e1e1e;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.7);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease;
+    }
+    .restaurant-card:hover,
+    .restaurant-card:focus {
+      background-color: #333;
+      outline: none;
+    }
+    .restaurant-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      color: #fff;
+    }
+    .restaurant-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      font-size: 0.9rem;
+      color: #bbb;
+      align-items: center;
+    }
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .info-item svg {
+      fill: #90caf9;
+      width: 16px;
+      height: 16px;
+    }
+    .representative-menu {
+      margin-top: 0.5rem;
+      font-style: italic;
+      color: #ccc;
+      font-size: 0.9rem;
+    }
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0,0,0,0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1rem;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-content {
+      background-color: #222;
+      border-radius: 10px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 1rem 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.9);
+      color: #eee;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-close-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: transparent;
+      border: none;
+      color: #90caf9;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .modal-close-btn:focus {
+      outline: 2px solid #90caf9;
+      outline-offset: 2px;
+    }
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: #fff;
+    }
+    .image-gallery {
+      display: flex;
+      overflow-x: auto;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .image-gallery img {
+      height: 120px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.3s ease;
+    }
+    .image-gallery img:focus,
+    .image-gallery img:hover {
+      border-color: #90caf9;
+      outline: none;
+    }
+    .modal-info {
+      font-size: 1rem;
+      line-height: 1.4;
+      margin-bottom: 1rem;
+    }
+    .contact-button {
+      background-color: #90caf9;
+      color: #121212;
+      border: none;
+      padding: 0.75rem 1.25rem;
+      border-radius: 25px;
+      font-weight: 600;
+      cursor: pointer;
+      align-self: flex-start;
+      transition: background-color 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .contact-button:hover,
+    .contact-button:focus {
+      background-color: #5a9bd8;
+      outline: none;
+    }
+    /* Responsive adjustments */
+    @media (max-width: 480px) {
+      .restaurant-list {
+        grid-template-columns: 1fr;
+      }
+      .image-gallery img {
+        height: 90px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav aria-label="음식 카테고리 필터">
+      <button class="category-button" aria-pressed="true" data-category="all">전체</button>
+      <button class="category-button" aria-pressed="false" data-category="korean">한식</button>
+      <button class="category-button" aria-pressed="false" data-category="western">양식</button>
+      <button class="category-button" aria-pressed="false" data-category="chinese">중식</button>
+      <button class="category-button" aria-pressed="false" data-category="japanese">일식</button>
+    </nav>
+  </header>
+  <main>
+    <section aria-live="polite" aria-label="음식점 추천 목록">
+      <ul class="restaurant-list" id="restaurant-list">
+        <!-- 음식점 카드들이 동적으로 삽입됩니다 -->
+      </ul>
+    </section>
+  </main>
+
+  <!-- 상세 페이지 모달 -->
+  <div class="modal-overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+    <div class="modal-content">
+      <button class="modal-close-btn" id="modal-close" aria-label="상세 정보 닫기">&times;</button>
+      <h2 class="modal-title" id="modal-title">상세 정보</h2>
+      <div class="image-gallery" id="image-gallery" tabindex="0" aria-label="메뉴 사진 갤러리">
+        <!-- 이미지들 동적 삽입 -->
+      </div>
+      <div class="modal-info" id="modal-info">
+        <!-- 상세 텍스트 정보 동적 삽입 -->
+      </div>
+      <a href="#" class="contact-button" id="contact-button" target="_blank" rel="noopener noreferrer">
+        <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#121212" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+        전화 걸기
+      </a>
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+
+    // 음식점 데이터 예시 (실제 앱에서는 API 호출로 대체)
+    const restaurants = [
+      {
+        id: 1,
+        name: '맛있는 한식당',
+        category: 'korean',
+        rating: 4.5,
+        distance: 0.3, // km
+        representativeMenu: '비빔밥',
+        images: [
+          'https://source.unsplash.com/featured/?bibimbap',
+          'https://source.unsplash.com/featured/?korean-food',
+        ],
+        reviews: '깔끔하고 맛있어요. 친절한 서비스가 인상적입니다.',
+        hours: '10:00 - 22:00',
+        phone: 'tel:010-1234-5678'
+      },
+      {
+        id: 2,
+        name: '정통 양식 레스토랑',
+        category: 'western',
+        rating: 4.2,
+        distance: 1.2,
+        representativeMenu: '스테이크',
+        images: [
+          'https://source.unsplash.com/featured/?steak',
+          'https://source.unsplash.com/featured/?western-food',
+        ],
+        reviews: '분위기가 좋아 데이트 장소로 추천합니다.',
+        hours: '11:30 - 23:00',
+        phone: 'tel:010-2345-6789'
+      },
+      {
+        id: 3,
+        name: '중화요리 명가',
+        category: 'chinese',
+        rating: 4.0,
+        distance: 0.8,
+        representativeMenu: '짜장면',
+        images: [
+          'https://source.unsplash.com/featured/?chinese-food',
+          'https://source.unsplash.com/featured/?noodles',
+        ],
+        reviews: '가성비 좋고 맛도 훌륭합니다.',
+        hours: '09:00 - 21:00',
+        phone: 'tel:010-3456-7890'
+      },
+      {
+        id: 4,
+        name: '일본식 스시집',
+        category: 'japanese',
+        rating: 4.7,
+        distance: 2.5,
+        representativeMenu: '초밥 세트',
+        images: [
+          'https://source.unsplash.com/featured/?sushi',
+          'https://source.unsplash.com/featured/?japanese-food',
+        ],
+        reviews: '신선한 재료와 정성스러운 손길이 느껴집니다.',
+        hours: '12:00 - 22:00',
+        phone: 'tel:010-4567-8901'
+      }
+    ];
+
+    const restaurantListEl = document.getElementById('restaurant-list');
+    const categoryButtons = document.querySelectorAll('.category-button');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modal-title');
+    const imageGallery = document.getElementById('image-gallery');
+    const modalInfo = document.getElementById('modal-info');
+    const contactButton = document.getElementById('contact-button');
+    const modalCloseBtn = document.getElementById('modal-close');
+
+    let currentCategory = 'all';
+
+    // 위치 권한 요청 및 위치 기반 음식점 필터링 (거리 기준 필터링 시뮬레이션)
+    function requestLocationAndLoad() {
+      if (!navigator.geolocation) {
+        alert('위치 정보를 지원하지 않는 브라우저입니다.');
+        renderRestaurants(restaurants); // 위치 없으면 전체 표시
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          // 실제 위치 기반 필터링은 서버 API 필요
+          // 여기서는 거리 정보가 이미 포함되어 있다고 가정하고 거리 3km 이내만 필터링
+          const nearbyRestaurants = restaurants.filter(r => r.distance <= 3);
+          renderRestaurants(nearbyRestaurants);
+        },
+        error => {
+          // 위치 권한 거부 시 전체 목록 표시
+          renderRestaurants(restaurants);
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+
+    // 음식점 카드 생성
+    function createRestaurantCard(restaurant) {
+      const li = document.createElement('li');
+      li.className = 'restaurant-card';
+      li.tabIndex = 0;
+      li.setAttribute('role', 'button');
+      li.setAttribute('aria-label', `${restaurant.name} 상세 정보 보기`);
+      li.dataset.id = restaurant.id;
+
+      li.innerHTML = `
+        <div class="restaurant-name">${restaurant.name}</div>
+        <div class="restaurant-info">
+          <div class="info-item" aria-label="평점">
+            <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <span>${restaurant.rating.toFixed(1)}</span>
+          </div>
+          <div class="info-item" aria-label="거리">
+            <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM12 11.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            <span>${restaurant.distance} km</span>
+          </div>
+        </div>
+        <div class="representative-menu">대표 메뉴: ${restaurant.representativeMenu}</div>
+      `;
+
+      // 키보드 접근성: Enter 또는 Space 키로 상세 보기
+      li.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openModal(restaurant.id);
+        }
+      });
+
+      // 클릭 시 상세 모달 열기
+      li.addEventListener('click', () => openModal(restaurant.id));
+
+      return li;
+    }
+
+    // 음식점 리스트 렌더링
+    function renderRestaurants(list) {
+      restaurantListEl.innerHTML = '';
+      if (list.length === 0) {
+        restaurantListEl.innerHTML = '<li>해당 조건에 맞는 음식점이 없습니다.</li>';
+        return;
+      }
+      list.forEach(r => {
+        restaurantListEl.appendChild(createRestaurantCard(r));
+      });
+    }
+
+    // 카테고리 필터 버튼 상태 업데이트
+    function updateCategoryButtons(selectedCategory) {
+      categoryButtons.forEach(btn => {
+        const isSelected = btn.dataset.category === selectedCategory;
+        btn.setAttribute('aria-pressed', isSelected.toString());
+      });
+    }
+
+    // 카테고리 필터링
+    function filterByCategory(category) {
+      currentCategory = category;
+      updateCategoryButtons(category);
+
+      let filtered = restaurants.filter(r => r.distance <= 3); // 위치 기반 필터 유지
+      if (category !== 'all') {
+        filtered = filtered.filter(r => r.category === category);
+      }
+      renderRestaurants(filtered);
+    }
+
+    // 상세 모달 열기
+    function openModal(id) {
+      const restaurant = restaurants.find(r => r.id === id);
+      if (!restaurant) return;
+
+      modalTitle.textContent = restaurant.name;
+
+      // 이미지 갤러리
+      imageGallery.innerHTML = '';
+      restaurant.images.forEach((src, idx) => {
+        const img = document.createElement('img');
+        img.src = src + `?${Date.now()}`; // 캐시 방지
+        img.alt = `${restaurant.name} 메뉴 사진 ${idx + 1}`;
+        img.tabIndex = 0;
+        imageGallery.appendChild(img);
+      });
+
+      // 상세 정보
+      modalInfo.innerHTML = `
+        <p><strong>리뷰:</strong> ${restaurant.reviews}</p>
+        <p><strong>영업시간:</strong> ${restaurant.hours}</p>
+      `;
+
+      // 연락처 버튼
+      contactButton.href = restaurant.phone;
+
+      // 모달 표시
+      modal.classList.add('active');
+      modal.setAttribute('aria-hidden', 'false');
+      modalCloseBtn.focus();
+
+      // 스크린리더 포커스 트랩
+      trapFocus(modal);
+    }
+
+    // 상세 모달 닫기
+    function closeModal() {
+      modal.classList.remove('active');
+      modal.setAttribute('aria-hidden', 'true');
+      // 모달 닫힌 후 카테고리 버튼 중 선택된 버튼에 포커스 복귀
+      const selectedBtn = document.querySelector('.category-button[aria-pressed="true"]');
+      if (selectedBtn) selectedBtn.focus();
+    }
+
+    // 포커스 트랩 구현
+    function trapFocus(element) {
+      const focusableElements = element.querySelectorAll(
+        'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusableElements.length === 0) return;
+
+      const firstEl = focusableElements[0];
+      const lastEl = focusableElements[focusableElements.length - 1];
+
+      function handleTrap(e) {
+        if (e.key === 'Tab') {
+          if (e.shiftKey) { // Shift + Tab
+            if (document.activeElement === firstEl) {
+              e.preventDefault();
+              lastEl.focus();
+            }
+          } else { // Tab
+            if (document.activeElement === lastEl) {
+              e.preventDefault();
+              firstEl.focus();
+            }
+          }
+        } else if (e.key === 'Escape') {
+          closeModal();
+        }
+      }
+
+      element.addEventListener('keydown', handleTrap);
+
+      // 모달 닫힐 때 이벤트 제거
+      function cleanup() {
+        element.removeEventListener('keydown', handleTrap);
+        element.removeEventListener('transitionend', cleanup);
+      }
+      element.addEventListener('transitionend', cleanup);
+    }
+
+    // 이벤트 리스너 등록
+    categoryButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterByCategory(btn.dataset.category);
+      });
+      btn.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          btn.click();
+        }
+      });
+    });
+
+    modalCloseBtn.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', e => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+
+    // 초기 실행
+    requestLocationAndLoad();
+  </script>
+</body>
+</html>
