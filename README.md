@@ -17,6 +17,8 @@ MS AI UI Assistant는 회의록, 사용자 피드백 등 다양한 입력을 기
 - 개선 효과 요약 및 다운로드 기능(원본/분석/코드)
 - Streamlit 기반 웹 UI 제공
 
+
+
 ### 🛠️ 기술 스택
 
 - Python 3.13
@@ -35,6 +37,12 @@ MS AI UI Assistant는 회의록, 사용자 피드백 등 다양한 입력을 기
 <img width="723" height="227" alt="image" src="https://github.com/user-attachments/assets/8cd25f24-cc1e-4a39-9bf8-c9a8586c668e" />
 
 <img width="723" height="265" alt="image" src="https://github.com/user-attachments/assets/1964b8a0-48c3-4145-9aa9-df4bcc4abb12" />
+
+
+### 아키텍처
+
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/65c70fa2-cc52-40df-860b-901745adf809" />
+
 
 
 ### 📊 프로젝트 구조
