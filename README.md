@@ -119,7 +119,9 @@ streamlit run Home.py
 
 - 요구사항이 담긴 파일을 입력하고, 기존 프론트엔드 코드를 입력하면 개선 결과 코드를 받을 수 있다.
 - HTML 코드인 경우에는 화면에서 미리보기도 가능하다.
-  
+
+<img width="1511" height="790" alt="image" src="https://github.com/user-attachments/assets/f8809111-6253-42c1-9e81-bd43448c7927" />
+
 ![ezgif-1d39768cc46cab](https://github.com/user-attachments/assets/3c553832-0e7c-4801-8d05-1d78d3908308)
 
 
