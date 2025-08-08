@@ -7,7 +7,7 @@ MS AI UI Assistant는 회의록, 사용자 피드백 등 다양한 입력을 기
 주요 목표는 누구나 쉽고 빠르게 UI/UX를 개선할 수 있도록 지원하는 것입니다.
 
 프로젝트 릴리즈 주소: https://sahara-web-001.azurewebsites.net (avaliable ~25-08-08)<br>
-전체 기능 demo: https://youtu.be/QLup92paS9Y
+전체 기능 demo: [https://youtu.be/QLup92paS9Y](https://youtu.be/p88RRI0-BeI?si=S_1Bujfp5d5j_ZV3)
 
 ### 📌 주요 기능
 - 회의록/피드백/요구사항 입력 → UI/UX 개선사항 자동 추출
