@@ -41,7 +41,7 @@ MS AI UI Assistant는 회의록, 사용자 피드백 등 다양한 입력을 기
 
 ### 아키텍처
 
-<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/65c70fa2-cc52-40df-860b-901745adf809" />
+<img width="723" height="1024" alt="image" src="https://github.com/user-attachments/assets/65c70fa2-cc52-40df-860b-901745adf809" />
 
 
 
