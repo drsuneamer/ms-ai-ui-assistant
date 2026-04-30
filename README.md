@@ -6,8 +6,8 @@ MS AI UI Assistant is a platform that automatically derives UI/UX improvement re
 The primary objective of this project is to enable users to quickly and easily enhance the usability and quality of user interfaces without requiring advanced technical expertise.
 This system integrates natural language processing, retrieval-augmented generation (RAG), and automated code generation to support data-driven UI/UX decision-making.
 
-🔗 Demo video:: [https://youtu.be/QLup92paS9Y](https://youtu.be/p88RRI0-BeI?si=S_1Bujfp5d5j_ZV3) <br>
-🌐 Deployment: https://sahara-web-001.azurewebsites.net <br>
+🔗 Demo video: [https://youtu.be/QLup92paS9Y](https://youtu.be/p88RRI0-BeI?si=S_1Bujfp5d5j_ZV3) <br>
+🌐 Deployment (archived): https://sahara-web-001.azurewebsites.net <br>
 &emsp;&emsp;*Note: The system was deployed on Microsoft Azure App Service during the project period for demonstration and testing purposes.*
 
 ### 📌 Key Features
