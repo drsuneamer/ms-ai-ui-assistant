@@ -106,14 +106,8 @@ pip install -r requirements.txt
 
 #### 1. 🚀 Integrated UI Improvement System
 
-- 텍스트, 음성(wav) 등 다양한 형태로 입력되는 회의록에 등장한 UI 개선 내용을 요약한다.
-- 기존 코드(html, react 등 여러 형태 지원)을 입력하면 파악한 개선 내용을 반영한 새로운 코드를 제시한다.
-- HTML 코드를 개선하는 경우에는 화면에서 바로 전후 비교가 가능하다.
-- 요약부터 전체 코드까지 정리된 보고서 파일(markdown) 다운로드가 가능하다.
-- 전체 개선, 사용자 경험, 접근성, 반응형 디자인 등 개선 집중 영역을 선택할 수 있다.
-
 - Summarizes UI improvement points from meeting notes (text or WAV audio)
-- Generates improved code based on existing frontend code input
+- Generates improved code based on existing frontend code input (HTML, React, and more)
 - HTML code: supports live before/after preview in browser
 - Downloadable report (Markdown) covering full summary and revised code
 - Selectable focus areas: overall, UX, accessibility, responsive design
@@ -125,12 +119,14 @@ pip install -r requirements.txt
 ![ezgif-368fdf2ecfd357](https://github.com/user-attachments/assets/3e84a44b-4549-4516-8c71-e7f7a129e090)
 
 
-#### 2. 📇 회의록 기반 UI 요구사항 분석
+#### 2. 📇 Meeting Transcript Analysis
 
-- txt, md 등 여러 형태의 회의록 파일을 받아 UI 개선 요구사항을 분석한다.
-- 사용자 피드백별 해결책을 제안한다.
-- 분석 결과를 json, markdown 파일로 다운로드 가능하다.
-- 정해진 시스템 프롬프트가 있지만, 사용자가 직접 화면에서 프롬프트 수정도 가능하다.
+This module processes meeting transcripts and extracts actionable UI requirements.
+
+- Supports text and document-based input
+- Identifies user feedback and usability problems
+- Suggests possible solutions for each issue
+- Exports results in JSON or Markdown format
 
 <img width="800" height="1125" alt="image" src="https://github.com/user-attachments/assets/43c492dc-a5a3-4598-a012-19f0b5a99d01" />
 
@@ -139,10 +135,10 @@ pip install -r requirements.txt
 
 
 
-#### 3. 🛠️ 회의 결과 기반 UI 개선
+#### 3. 🛠️  Code Improvement from Requirements
 
-- 요구사항이 담긴 파일을 입력하고, 기존 프론트엔드 코드를 입력하면 개선 결과 코드를 받을 수 있다.
-- HTML 코드인 경우에는 화면에서 미리보기도 가능하다.
+- Input a requirements file + existing frontend code → receive improved code output
+- HTML output: live preview available
 
 <img width="800" height="790" alt="image" src="https://github.com/user-attachments/assets/f8809111-6253-42c1-9e81-bd43448c7927" />
 <img width="800" height="1125" alt="image" src="https://github.com/user-attachments/assets/9f5389f2-e2b2-4327-9450-c66c3c40d78e" />
@@ -151,11 +147,11 @@ pip install -r requirements.txt
 
 
 
-#### 4. 💡 AI에게 질문하기
+#### 4. 💡 AI Question and Recommendation System
 
-- AI agent가 질문에 적합한 tool을 선택하도록 한다.
-- UI/UX 관련 질문의 경우에는, Azure AI Search로 사전에 정의된 검색 인덱스를 참조하도록 한다. 이때 Azure Blob Storage를 통해 보편적인 UI 관련 가이드 문서를 indexing에 사용했다.
-- 핵심 문구 등 마이크로카피 관련 질문에는 prompt를 통해 마이크로카피 작성 가이드라인을 제시하여 적합한 답변을 낼 수 있도록 설정했다.
+- AI agent selects appropriate tool per query
+- UI/UX questions: routed to Azure AI Search (RAG over pre-indexed design guideline documents)
+- Microcopy questions: prompt-guided responses based on writing guidelines
 
 <img width="800" height="917" alt="image" src="https://github.com/user-attachments/assets/548855d6-2ea0-4bf5-a97a-df085106f12e" />
 
@@ -163,18 +159,20 @@ pip install -r requirements.txt
 ![ezgif-3dd52fc8619793](https://github.com/user-attachments/assets/a89f47f6-20b1-4a94-8da0-e12d6ec4989e)
 
 
-#### 5. 💿 회의 녹음 기반 요약
+#### 5. 💿 Speech-Based Meeting Summary
 
-- WAV 파일을 업로드하면 내용을 인식하여 회의 내용을 요약해준다.
+- Accepts WAV audio files
+- Performs speech recognition
+- Generates summarized meeting content
 
 ![ezgif-167d9aabeaa9d7](https://github.com/user-attachments/assets/72573122-e58b-436e-8efe-d20892c30516)
 
 
 
-#### 6. ⚠️ 관리자 기능 - 모니터링 상태 확인
+#### 6. ⚠️ System Monitoring and Administration
 
-- 특정 링크로 들어가서 .streamlit/secrets.toml로 설정한 비밀번호를 맞게 입력하면 langfuse 사이트로 연결되는 관리자 페이지 접속이 가능하다.
-- langfuse와의 연결 상태도 확인 가능하다.
+- Password-protected admin page linking to Langfuse dashboard
+- Langfuse connection status visible
 
 ![ezgif-17fee65a8cd4b4](https://github.com/user-attachments/assets/5d74b869-4484-436f-9ecf-701955741741)
 <img width="800" height="680" alt="image" src="https://github.com/user-attachments/assets/7037981f-fc54-407e-81fe-c82745ee266f" />
@@ -182,9 +180,9 @@ pip install -r requirements.txt
 
 ---
 
-### 😌 추가 개선 사항
+### 🔦 Planned Improvements
 
-- 오디오 연속 인식 기능 개선
-- 속도 개선 및 기능 안정화
+- Continuous audio recognition enhancement
+- Performance optimization and stability improvements
 
 
