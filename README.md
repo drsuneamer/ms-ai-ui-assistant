@@ -1,114 +1,122 @@
 # MS AI UI Assistant
-> (2025. 08. 06 ~ 07)
-AI 기반 UI/UX 개선 자동화 시스템
+> AI-Based UI/UX Improvement Automation System
 
-### 🖐️ 프로젝트 소개
-MS AI UI Assistant는 회의록, 사용자 피드백 등 다양한 입력을 기반으로 UI/UX 개선 요구사항을 자동으로 도출하고, HTML, js 등 다양한 코드의 개선안을 빠르게 확인해볼 수 있는 플랫폼입니다.
-주요 목표는 누구나 쉽고 빠르게 UI/UX를 개선할 수 있도록 지원하는 것입니다.
+### 🖐️ Project Overview
+MS AI UI Assistant is a platform that automatically derives UI/UX improvement requirements from various types of input, such as meeting transcripts and user feedback, and generates improved versions of HTML, JavaScript, and other code.
+The primary objective of this project is to enable users to quickly and easily enhance the usability and quality of user interfaces without requiring advanced technical expertise.
+This system integrates natural language processing, retrieval-augmented generation (RAG), and automated code generation to support data-driven UI/UX decision-making.
 
-프로젝트 릴리즈 주소: https://sahara-web-001.azurewebsites.net (avaliable ~25-08-08)<br>
-전체 기능 demo: [https://youtu.be/QLup92paS9Y](https://youtu.be/p88RRI0-BeI?si=S_1Bujfp5d5j_ZV3)
+🔗 Demo video:: [https://youtu.be/QLup92paS9Y](https://youtu.be/p88RRI0-BeI?si=S_1Bujfp5d5j_ZV3) <br>
+🌐 Deployment: https://sahara-web-001.azurewebsites.net <br>
+&emsp;&emsp;*Note: The system was deployed on Microsoft Azure App Service during the project period for demonstration and testing purposes.*
 
-### 📌 주요 기능
-- 회의록/피드백/요구사항 입력 → UI/UX 개선사항 자동 추출
-- 음성 녹음, txt/md 파일, 텍스트 직접 입력 등 다양한 형태의 회의록 요약 및 핵심 UI 변경 기능 리포트
-- 개선된 UI/UX 코드 및 개선 보고서 문서화
-- 반응형 디자인, 접근성 개선, 시각적 디자인 등 집중 영역 선택 가능
-- 개선 효과 요약 및 다운로드 기능(원본/분석/코드)
-- Streamlit 기반 웹 UI 제공
+### 📌 Key Features
+- Automatically extracts UI/UX improvement requirements from meeting transcripts, feedback, or requirement documents
+- Supports multiple input formats, including voice recordings, text files (txt/md), and direct text input
+- Generates improved UI/UX code based on identified requirements
+- Provides responsive design, accessibility, and visual design improvement recommendations
+- Allows users to select specific focus areas for improvement
+- Produces structured improvement reports and downloadable results (original input, analysis output, and generated code)
+- Offers a web-based interface implemented using Streamlit
 
+### 🛠️ Technology Stack
 
+**Programming Language**<br>
+- Python 3.13<br>
 
-### 🛠️ 기술 스택
+**Frameworks and Libraries**
+- Streamlit (Web UI framework)
+- LangChain (LLM orchestration framework)
+- Langfuse (Monitoring and observability tool)<br>
 
-- Python 3.13
-- Streamlit (web UI)
-- Langfuse (AI monitoring)
+**AI and Cloud Services**
 - Azure OpenAI
-  - GPT 4.1 (agent)
-  - GPT 4.1-mini
-  - GPT 4o (음성 처리)
-  - text-embedding-3-small (RAG)
+  - GPT-4.1 (Agent model)<br>
+  - GPT-4.1-mini<br>
+  - GPT-4o (Speech processing)<br>
+  - text-embedding-3-small (Vector embedding)
 - Azure AI Search
 - Azure Storage Account
-- Azure Speech services (Azure Cognitive Services)
-- Azure APP service (web deployment)
+- Azure Speech Services
+- Azure App Service (Deployment)
 
 <img width="723" height="227" alt="image" src="https://github.com/user-attachments/assets/8cd25f24-cc1e-4a39-9bf8-c9a8586c668e" />
 
 <img width="723" height="265" alt="image" src="https://github.com/user-attachments/assets/1964b8a0-48c3-4145-9aa9-df4bcc4abb12" />
 
 
-### 아키텍처
+### 🗺️ Architecture
+
+The system uses a multi-model AI pipeline where an AI agent routes each request to the appropriate tool:
+
+- For UI/UX domain questions → RAG pipeline (Azure AI Search over indexed design guidelines)
+- For code generation and requirement extraction → direct GPT-4.1 agent
+- For audio input → GPT-4o speech processing → text → agent pipeline
 
 <img width="723" height="1024" alt="image" src="https://github.com/user-attachments/assets/65c70fa2-cc52-40df-860b-901745adf809" />
 
 
 
-### 📊 프로젝트 구조
+### 📊 Project Structure
 ms-ai-ui-assistant/<br>
-├── pages/    _하위에 streamlit 사이드바 페이지 구성_<br>
+├── pages/    _# Streamlit sidebar pages_<br>
 ├── result_docs/<br>
 ├── test_data/<br>
-├── utils/    _langchain openai 설정, langfuse monitor, ai speech 관련 함수 등 여러 곳에서 쓰이는 함수 정의_<br>
+├── utils/    _# Shared utilities: LangChain/OpenAI setup, Langfuse monitor, Azure Speech helpers_<br>
 ├── .deployment<br>
 ├── .gitignore<br>
-├── Home.py    _streamlit 메인 구동 페이지_<br>
+├── Home.py    _# Streamlit main entry point_<br>
 ├── README.md<br>
 ├── requirements.txt<br>
-├── streamlit.sh    _azure app 배포 설정_<br>
+├── streamlit.sh    _# Azure App Service deployment config_<br>
 └── test_scenario.md<br>
 
 ---
 
-### 🧰 개발환경 세팅
+### 🧰 Local Setup
 
-venv 생성
 ```bash
+# Create virtual environment
 python -m venv venv
-```
 
-가상환경 실행 (powershell 일반모드 X)
-```bash
+# Activate (PowerShell admin mode required)
 .\venv\Scripts\activate
-```
 
-패키지 설치
-```bash
+# install packages
 pip install streamlit openai python-dotenv langchain langchain-openai langchain-community azure-cognitiveservices-speech langfuse
-```
 
-requirements.txt 만드는 법
-```bash
+# Run
+streamlit run Home.py
+
+# Optional: Generate requirements.txt
 pip freeze > requirements.txt
-```
 
-requirements.txt 기반 설치
-```bash
+# Optional: Install from requirements.txt
 pip install -r requirements.txt
 ```
 
-streamlit 메인 페이지 실행
-```bash
-streamlit run Home.py
-```
 
----
 
-### 🐾 세부 기능
+### 🐾 Features in Detail
 
-#### 0. 메인 페이지 - 기능 소개
+#### Main Page – Feature Overview
 
 <img width="800" height="1081" alt="image" src="https://github.com/user-attachments/assets/f50c62ff-f784-4802-a82f-7a4c6d2ffeb4" />
 
 
-#### 1. 🚀 통합 UI 개선 시스템
+#### 1. 🚀 Integrated UI Improvement System
 
 - 텍스트, 음성(wav) 등 다양한 형태로 입력되는 회의록에 등장한 UI 개선 내용을 요약한다.
 - 기존 코드(html, react 등 여러 형태 지원)을 입력하면 파악한 개선 내용을 반영한 새로운 코드를 제시한다.
 - HTML 코드를 개선하는 경우에는 화면에서 바로 전후 비교가 가능하다.
 - 요약부터 전체 코드까지 정리된 보고서 파일(markdown) 다운로드가 가능하다.
 - 전체 개선, 사용자 경험, 접근성, 반응형 디자인 등 개선 집중 영역을 선택할 수 있다.
+
+- Summarizes UI improvement points from meeting notes (text or WAV audio)
+- Generates improved code based on existing frontend code input
+- HTML code: supports live before/after preview in browser
+- Downloadable report (Markdown) covering full summary and revised code
+- Selectable focus areas: overall, UX, accessibility, responsive design
 
 <img width="800" height="1003" alt="image" src="https://github.com/user-attachments/assets/393134cf-c4a7-4678-b376-8c3ae3cc2fc2" />
 
