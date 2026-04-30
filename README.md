@@ -53,7 +53,7 @@ The system uses a multi-model AI pipeline where an AI agent routes each request 
 - For code generation and requirement extraction → direct GPT-4.1 agent
 - For audio input → GPT-4o speech processing → text → agent pipeline
 
-<img width="723" height="1024" alt="image" src="https://github.com/user-attachments/assets/65c70fa2-cc52-40df-860b-901745adf809" />
+<img width="723" alt="image" src="https://github.com/user-attachments/assets/65c70fa2-cc52-40df-860b-901745adf809" />
 
 
 
@@ -101,7 +101,7 @@ pip install -r requirements.txt
 
 #### Main Page – Feature Overview
 
-<img width="800" height="1081" alt="image" src="https://github.com/user-attachments/assets/f50c62ff-f784-4802-a82f-7a4c6d2ffeb4" />
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/f50c62ff-f784-4802-a82f-7a4c6d2ffeb4" />
 
 
 #### 1. 🚀 Integrated UI Improvement System
@@ -112,7 +112,7 @@ pip install -r requirements.txt
 - Downloadable report (Markdown) covering full summary and revised code
 - Selectable focus areas: overall, UX, accessibility, responsive design
 
-<img width="800" height="1003" alt="image" src="https://github.com/user-attachments/assets/393134cf-c4a7-4678-b376-8c3ae3cc2fc2" />
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/393134cf-c4a7-4678-b376-8c3ae3cc2fc2" />
 
 ![ezgif-8bd73ba992a59a](https://github.com/user-attachments/assets/8b84723c-6036-4102-9582-5ef5a904bf30)
 ![ezgif-18b42cb0146202](https://github.com/user-attachments/assets/3a960d64-b1d4-4333-a9c6-54bbcf040e76)
@@ -128,7 +128,7 @@ This module processes meeting transcripts and extracts actionable UI requirement
 - Suggests possible solutions for each issue
 - Exports results in JSON or Markdown format
 
-<img width="800" height="1125" alt="image" src="https://github.com/user-attachments/assets/43c492dc-a5a3-4598-a012-19f0b5a99d01" />
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/43c492dc-a5a3-4598-a012-19f0b5a99d01" />
 
 ![ezgif-1b33ad3f72b925](https://github.com/user-attachments/assets/0413d11d-fe6e-482d-9f8a-51347d82f556)
 ![ezgif-1a88439846a227](https://github.com/user-attachments/assets/319b2610-1624-48da-b17e-15a17b53f974)
@@ -140,8 +140,8 @@ This module processes meeting transcripts and extracts actionable UI requirement
 - Input a requirements file + existing frontend code → receive improved code output
 - HTML output: live preview available
 
-<img width="800" height="790" alt="image" src="https://github.com/user-attachments/assets/f8809111-6253-42c1-9e81-bd43448c7927" />
-<img width="800" height="1125" alt="image" src="https://github.com/user-attachments/assets/9f5389f2-e2b2-4327-9450-c66c3c40d78e" />
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/f8809111-6253-42c1-9e81-bd43448c7927" />
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/9f5389f2-e2b2-4327-9450-c66c3c40d78e" />
 
 ![ezgif-1d39768cc46cab](https://github.com/user-attachments/assets/3c553832-0e7c-4801-8d05-1d78d3908308)
 
@@ -153,7 +153,7 @@ This module processes meeting transcripts and extracts actionable UI requirement
 - UI/UX questions: routed to Azure AI Search (RAG over pre-indexed design guideline documents)
 - Microcopy questions: prompt-guided responses based on writing guidelines
 
-<img width="800" height="917" alt="image" src="https://github.com/user-attachments/assets/548855d6-2ea0-4bf5-a97a-df085106f12e" />
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/548855d6-2ea0-4bf5-a97a-df085106f12e" />
 
 ![ezgif-36666b510d4821](https://github.com/user-attachments/assets/e4c6cd97-9403-41d1-a20a-1b9c5a5e7087)
 ![ezgif-3dd52fc8619793](https://github.com/user-attachments/assets/a89f47f6-20b1-4a94-8da0-e12d6ec4989e)
@@ -175,7 +175,7 @@ This module processes meeting transcripts and extracts actionable UI requirement
 - Langfuse connection status visible
 
 ![ezgif-17fee65a8cd4b4](https://github.com/user-attachments/assets/5d74b869-4484-436f-9ecf-701955741741)
-<img width="800" height="680" alt="image" src="https://github.com/user-attachments/assets/7037981f-fc54-407e-81fe-c82745ee266f" />
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/7037981f-fc54-407e-81fe-c82745ee266f" />
 
 
 ---
